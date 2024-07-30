@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.secrets)
+    alias(libs.plugins.serialization)
 }
 
 android {
@@ -38,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -50,6 +54,18 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.viewmodel.lifecycle)
+    implementation(libs.coil)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    //annotationProcessor(libs.androidx.room.compiler)
+
+    implementation(libs.retrofit2)
+    implementation(libs.retrofit2.converter)
+    implementation(libs.okhttp3)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

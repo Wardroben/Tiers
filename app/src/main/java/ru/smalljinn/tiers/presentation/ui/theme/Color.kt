@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.ui.theme
+package ru.smalljinn.tiers.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
