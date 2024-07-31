@@ -17,7 +17,7 @@ class TierListRepositoryImpl(private val tierDao: TierDao) : TierListRepository 
         return tierDao.deleteTierList(tierList)
     }
 
-    override suspend fun insertTierList(tierList: TierList) {
+    override suspend fun insertTierList(tierList: TierList): Long {
         return tierDao.insertTierList(tierList)
     }
 }

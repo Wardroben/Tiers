@@ -7,5 +7,5 @@ interface TierListRepository {
     fun getAllTierListsStream(): Flow<List<TierList>>
     suspend fun getTierListById(id: Long): TierList
     suspend fun deleteTierList(tierList: TierList)
-    suspend fun insertTierList(tierList: TierList)
+    suspend fun insertTierList(tierList: TierList): Long
 }
