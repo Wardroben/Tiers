@@ -1,14 +1,19 @@
 package ru.smalljinn.tiers.data.database.repository
 
-import ru.smalljinn.tiers.data.database.dao.TierDao
+import kotlinx.coroutines.flow.Flow
+import ru.smalljinn.tiers.data.database.dao.ElementDao
 import ru.smalljinn.tiers.data.database.model.TierElement
 
-class TierElementRepositoryImpl(private val tierDao: TierDao) : TierElementRepository {
+class TierElementRepositoryImpl(private val elementDao: ElementDao) : TierElementRepository {
     override suspend fun insertTierElement(tierElement: TierElement): Long {
-        return tierDao.insertTierElement(tierElement)
+        return elementDao.insertElement(tierElement)
     }
 
     override suspend fun deleteTierElement(tierElement: TierElement) {
-        return tierDao.deleteTierElement(tierElement)
+        return elementDao.deleteElement(tierElement)
+    }
+
+    override fun getNotAttachedElementsOfListStream(tierListId: Long): Flow<List<TierElement>> {
+        return elementDao.getUnassertedElementsStream(tierListId)
     }
 }

@@ -5,6 +5,7 @@ import retrofit2.http.Query
 import ru.smalljinn.tiers.BuildConfig
 import ru.smalljinn.tiers.data.images.model.Response
 
+const val JSON_FORMAT = "application/json"
 const val BASE_URL = "https://www.googleapis.com"
 private const val IMAGE_SEARCH_TYPE = "image"
 

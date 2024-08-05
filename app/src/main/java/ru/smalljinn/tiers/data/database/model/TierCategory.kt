@@ -11,6 +11,7 @@ data class TierCategory(
     val tierListId: Long,
     val name: String,
     val colorArgb: Int,
+    val position: Int
     //val elements: List<TierElement>
 ) {
     @Ignore

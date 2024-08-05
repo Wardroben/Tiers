@@ -1,14 +1,20 @@
 package ru.smalljinn.tiers.data.database.repository
 
-import ru.smalljinn.tiers.data.database.dao.TierDao
+import kotlinx.coroutines.flow.Flow
+import ru.smalljinn.tiers.data.database.dao.CategoryDao
 import ru.smalljinn.tiers.data.database.model.TierCategory
+import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 
-class TierCategoryRepositoryImpl(private val tierDao: TierDao) : TierCategoryRepository {
-    override suspend fun insertCategory(tierCategory: TierCategory): Long {
-        return tierDao.insertTierCategory(tierCategory)
+class TierCategoryRepositoryImpl(private val categoryDao: CategoryDao) : TierCategoryRepository {
+    override suspend fun insertCategory(category: TierCategory): Long {
+        return categoryDao.insertCategory(category)
     }
 
-    override suspend fun deleteCategory(tierCategory: TierCategory) {
-        return tierDao.deleteTierCategory(tierCategory)
+    override suspend fun deleteCategory(category: TierCategory) {
+        return categoryDao.deleteCategory(category)
+    }
+
+    override fun getCategoriesWithElementsStream(): Flow<List<TierCategoryWithElements>> {
+        return categoryDao.getCategoriesWithElementsStream()
     }
 }

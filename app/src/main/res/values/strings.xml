@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Tiers</string>
+    <string name="default_tierlist_name">Untitled</string>
 </resources>

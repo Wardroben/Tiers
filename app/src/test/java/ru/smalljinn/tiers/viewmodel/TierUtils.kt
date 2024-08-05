@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers
+package ru.smalljinn.tiers.viewmodel
 
 import android.graphics.Color
 import androidx.core.graphics.toColor
