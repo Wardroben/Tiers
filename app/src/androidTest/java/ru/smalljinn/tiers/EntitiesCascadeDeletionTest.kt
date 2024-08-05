@@ -15,6 +15,8 @@ import org.junit.runner.RunWith
 import ru.smalljinn.tiers.data.database.TierDatabase
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepositoryImpl
+import ru.smalljinn.tiers.data.database.repository.TierElementRepository
+import ru.smalljinn.tiers.data.database.repository.TierElementRepositoryImpl
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepositoryImpl
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
@@ -24,6 +26,7 @@ const val BASE_CATEGORIES_COUNT = 5
 @RunWith(AndroidJUnit4::class)
 class EntitiesCascadeDeletionTest {
     private lateinit var createNewTierListUseCase: CreateNewTierListUseCase
+    private lateinit var elementRepository: TierElementRepository
     private lateinit var categoryRepository: TierCategoryRepository
     private lateinit var tierListRepository: TierListRepository
     private lateinit var db: TierDatabase
@@ -34,6 +37,7 @@ class EntitiesCascadeDeletionTest {
         db = Room.inMemoryDatabaseBuilder(context, TierDatabase::class.java).build()
         tierListRepository = TierListRepositoryImpl(db.tierListDao())
         categoryRepository = TierCategoryRepositoryImpl(db.categoryDao())
+        elementRepository = TierElementRepositoryImpl(db.elementDao())
         createNewTierListUseCase = CreateNewTierListUseCase(tierListRepository, categoryRepository)
         //TODO Ye ye this is very bad. New use case you will see soon
     }
@@ -47,18 +51,48 @@ class EntitiesCascadeDeletionTest {
     fun createNewTierListUseCase_TierListDelete_AllCategoriesAndElementsDeletedWithList() =
         runTest {
             //create empty list with base categories
-            createNewTierListUseCase()
+            val tierListId = createNewTierListUseCase()
+            repeat(3) {
+                elementRepository.insertTierElement(
+                    TierUtils.createTierElement(tierListId = tierListId)
+                )
+            }
+
             var tierLists = tierListRepository.getAllListsWithCategoriesStream().first()
             var categories = categoryRepository.getCategoriesWithElementsStream().first()
 
-            assertThat(tierLists.size, equalTo(1))
             assertThat(categories.size, equalTo(BASE_CATEGORIES_COUNT))
+
+            var firstCategory = categories.first()
+
+            assertThat(firstCategory.elements.size, equalTo(0))
+
+            repeat(2) {
+                elementRepository.insertTierElement(
+                    TierUtils.createTierElement(
+                        tierListId = tierListId,
+                        tierCategoryId = firstCategory.category.id
+                    )
+                )
+            }
+
+            var unassertedElements =
+                elementRepository.getNotAttachedElementsOfListStream(tierListId).first()
+            categories = categoryRepository.getCategoriesWithElementsStream().first()
+            firstCategory = categories.first()
+
+            assertThat(firstCategory.elements.size, equalTo(2))
+            assertThat(unassertedElements.size, equalTo(3))
+            assertThat(tierLists.size, equalTo(1))
 
             tierListRepository.deleteTierList(tierLists.first().list)
             tierLists = tierListRepository.getAllListsWithCategoriesStream().first()
             categories = categoryRepository.getCategoriesWithElementsStream().first()
+            unassertedElements =
+                elementRepository.getNotAttachedElementsOfListStream(tierListId).first()
 
             assertThat(tierLists.size, equalTo(0))
             assertThat(categories.size, equalTo(0))
+            assertThat(unassertedElements.size, equalTo(0))
         }
 }
