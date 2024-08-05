@@ -13,7 +13,9 @@ import org.junit.Before
 import org.junit.Test
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
+import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
+import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersListViewModel
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersState
 import java.io.IOException
@@ -21,14 +23,18 @@ import java.io.IOException
 class TiersListViewModelTests {
     /*@get:Rule
     val mainDispatcherRule = MainDispatcherRule()*/
-
-    private lateinit var repository: TierListRepository
+    private lateinit var categoryRepository: TierCategoryRepository
+    private lateinit var tierRepository: TierListRepository
     private lateinit var viewmodel: TiersListViewModel
 
     @Before
     fun createDb() {
-        repository = MockTiersListRepository()
-        viewmodel = TiersListViewModel(repository)
+        categoryRepository = MockCategoryRepositoryImpl()
+        tierRepository = MockTiersListRepository()
+        viewmodel = TiersListViewModel(
+            tierRepository,
+            createNewTierListUseCase = CreateNewTierListUseCase(tierRepository, categoryRepository)
+        )
     }
 
     @After
@@ -40,11 +46,11 @@ class TiersListViewModelTests {
     @Test
     @Throws(Exception::class)
     fun tierListRepository_newTierListInserted_FlowUpdated() = runTest {
-        var listLists = repository.getAllTierListsStream().first()
+        var listLists = tierRepository.getAllTierListsStream().first()
         assertEquals(listLists.size, 0)
         val tierList = TierUtils.createTierList(id = 25, "Jojoj")
-        repository.insertTierList(tierList)
-        listLists = repository.getAllTierListsStream().first()
+        tierRepository.insertTierList(tierList)
+        listLists = tierRepository.getAllTierListsStream().first()
         assertEquals(listLists.size, 1)
         assertThat(listLists.first(), equalTo(tierList))
     }
@@ -63,7 +69,10 @@ class TiersListViewModelTests {
         assert((viewModelUiState as TiersState.Success).tiersList.isNotEmpty())
         assertEquals(viewModelUiState.tiersList.first().name, newListName)*/
         val fakeRepo = MockTiersListRepository()
-        val vm = TiersListViewModel(fakeRepo)
+        val vm = TiersListViewModel(
+            fakeRepo,
+            createNewTierListUseCase = CreateNewTierListUseCase(tierRepository, categoryRepository)
+        )
         val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
             vm.uiState.collect {}
         }
@@ -87,7 +96,7 @@ class TiersListViewModelTests {
     @Throws(Exception::class)
     fun tiersListViewModel_loadTierListFromDb_SuccessStateSet() = runTest {
         val tierList = TierUtils.createTierList(id = 25, "Jojoj")
-        repository.insertTierList(tierList)
+        tierRepository.insertTierList(tierList)
         val uiState = viewmodel.uiState.value as TiersState.Success
         assertThat(uiState.tiersList.first(), equalTo(tierList))
     }
