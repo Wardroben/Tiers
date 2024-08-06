@@ -23,7 +23,6 @@ import ru.smalljinn.tiers.util.EventHandler
 sealed class TiersState {
     data object Loading : TiersState()
     data object Empty : TiersState()
-
     @Immutable
     data class Success(val tiersList: List<TierListWithCategories>) : TiersState()
 }

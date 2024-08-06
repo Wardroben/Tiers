@@ -1,6 +1,5 @@
 package ru.smalljinn.tiers.presentation.ui.screens.tierslist
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -84,7 +83,7 @@ fun TiersListScreen(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val tiersScrollState = rememberLazyListState()
     val createNewTierList = {
         viewModel.obtainEvent(TiersEvent.CreateNew(name = "Untitled"))
@@ -95,6 +94,7 @@ fun TiersListScreen(
         }
     }
     val scrollToTop = { scope.launch { tiersScrollState.animateScrollToItem(0) } }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -116,24 +116,19 @@ fun TiersListScreen(
                     elevation = FloatingActionButtonDefaults.elevation()
                 )
             }
+
         }
     ) { innerPadding ->
         TiersListBody(
             modifier = Modifier.padding(innerPadding),
-            uiState = uiState.value,
+            uiState = uiState,
             onCreateNewClicked = createNewTierList,
             onDeleteTierList = { viewModel.obtainEvent(TiersEvent.Delete(it)) },
             tiersListState = tiersScrollState,
             onClearSearchQuery = { viewModel.obtainEvent(TiersEvent.ClearSearch) },
             onSearchChanged = { query -> viewModel.obtainEvent(TiersEvent.Search(query)) },
             searchQuery = viewModel.searchQuery,
-            onTierListClicked = { tierList: TierList ->
-                Toast.makeText(
-                    context,
-                    "id: ${tierList.id}, name: ${tierList.name}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            onTierListClicked = { tierList: TierList -> navigateToEdit(tierList.id) }
         )
     }
 }

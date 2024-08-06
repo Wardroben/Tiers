@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import ru.smalljinn.tiers.presentation.ui.screens.edit.TierEditScreen
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersListScreen
 
 @Composable
@@ -32,7 +33,8 @@ fun TierNavHost(
             route = NavigationDestination.Edit.route,
             arguments = listOf(navArgument(EDIT_TIER_NAV_ARGUMENT) { type = NavType.LongType })
         ) { navBackStackEntry ->
-
+            val listId = navBackStackEntry.arguments?.getLong(EDIT_TIER_NAV_ARGUMENT)
+            TierEditScreen()
         }
     }
 }

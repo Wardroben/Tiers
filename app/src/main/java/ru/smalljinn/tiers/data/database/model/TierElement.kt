@@ -24,7 +24,7 @@ import androidx.room.PrimaryKey
 )
 data class TierElement(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    @ColumnInfo(index = true) val categoryId: Long?,
+    @ColumnInfo(index = true) val categoryId: Long? = null,
     @ColumnInfo(index = true) val tierListId: Long,
     val imageUrl: String,
     val position: Int? = null //position in list. Null means that element not assigned to category id ???

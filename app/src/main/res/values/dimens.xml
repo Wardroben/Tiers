@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="round_clip">10dp</dimen>
+    <dimen name="item_spacing">5dp</dimen>
+    <dimen name="item_arrangement">10dp</dimen>
+    <dimen name="image_list_size">64dp</dimen>
+    <dimen name="image_category_size">84dp</dimen>
+    <dimen name="min_category_height">64dp</dimen>
+</resources>

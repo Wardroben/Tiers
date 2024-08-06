@@ -5,6 +5,10 @@ import ru.smalljinn.tiers.data.database.dao.ElementDao
 import ru.smalljinn.tiers.data.database.model.TierElement
 
 class TierElementRepositoryImpl(private val elementDao: ElementDao) : TierElementRepository {
+    override suspend fun insertTierElements(tierElements: List<TierElement>): List<Long> {
+        return elementDao.insertTierElements(tierElements)
+    }
+
     override suspend fun insertTierElement(tierElement: TierElement): Long {
         return elementDao.insertElement(tierElement)
     }

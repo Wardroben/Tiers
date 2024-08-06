@@ -15,8 +15,12 @@ import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepositoryImpl
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepositoryImpl
-import ru.smalljinn.tiers.data.images.repository.ImageRepository
-import ru.smalljinn.tiers.data.images.repository.ImageRepositoryImpl
+import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepository
+import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepositoryImpl
+import ru.smalljinn.tiers.data.images.repository.device.PhotoProcessor
+import ru.smalljinn.tiers.data.images.repository.device.PhotoProcessorImpl
+import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
+import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryImpl
 import ru.smalljinn.tiers.data.images.source.BASE_URL
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
@@ -35,37 +39,43 @@ class TierApp : Application() {
             .baseUrl(BASE_URL)
             .build()
         val googleSearchService = retrofit.create(GoogleSearchApi::class.java)
+        val photoProcessor = PhotoProcessorImpl(applicationContext)
         appContainer = AppContainerImpl(
             tierListDao = tierListDao,
             tierCategoryDao = tierCategoryDao,
             tierElementDao = tierElementDao,
-            googleSearchApi = googleSearchService
+            googleSearchApi = googleSearchService,
+            photoProcessor = photoProcessor
         )
     }
 }
 
 interface AppContainer {
+    val devicePhotoRepository: DevicePhotoRepository
     val tierElementRepository: TierElementRepository
     val tierCategoryRepository: TierCategoryRepository
     val tierListRepository: TierListRepository
     val createNewTierListUseCase: CreateNewTierListUseCase
-    val imageRepository: ImageRepository
+    val networkImageRepository: NetworkImageRepository
 }
 
 private class AppContainerImpl(
+    private val photoProcessor: PhotoProcessor,
     private val tierListDao: TierListDao,
     private val tierCategoryDao: CategoryDao,
     private val tierElementDao: ElementDao,
     private val googleSearchApi: GoogleSearchApi
 ) : AppContainer {
+    override val devicePhotoRepository: DevicePhotoRepository
+        get() = DevicePhotoRepositoryImpl(photoProcessor)
     override val tierElementRepository: TierElementRepository
         get() = TierElementRepositoryImpl(tierElementDao)
     override val tierCategoryRepository: TierCategoryRepository
         get() = TierCategoryRepositoryImpl(tierCategoryDao)
     override val tierListRepository: TierListRepository
         get() = TierListRepositoryImpl(tierListDao)
-    override val imageRepository: ImageRepository
-        get() = ImageRepositoryImpl(googleSearchApi)
+    override val networkImageRepository: NetworkImageRepository
+        get() = NetworkImageRepositoryImpl(googleSearchApi)
     override val createNewTierListUseCase: CreateNewTierListUseCase
         get() = CreateNewTierListUseCase(tierListRepository, tierCategoryRepository)
 }
