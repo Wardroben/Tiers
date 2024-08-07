@@ -8,12 +8,15 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.TierApp
+import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.data.database.model.TierListWithCategoriesAndElements
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
@@ -30,37 +33,41 @@ data class EditUiState(
     val notAttachedElements: List<TierElement> = emptyList(),
     val listWithCategoriesAndElements: TierListWithCategoriesAndElements? = null,
     val tierListName: String = TIER_LIST_UNTITLED_NAME,
-    val isPhotoProcessing: Boolean = false
+    val isPhotoProcessing: Boolean = false,
+    val selectedCategory: TierCategory? = null
 )
 
 //categories list
 //elements list
 class TierEditViewModel(
     private val devicePhotoRepository: DevicePhotoRepository,
-    private val tierCategoryRepository: TierCategoryRepository,
-    private val tierElementRepository: TierElementRepository,
-    private val tierListRepository: TierListRepository,
+    private val categoryRepository: TierCategoryRepository,
+    private val elementRepository: TierElementRepository,
+    private val listRepository: TierListRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel(), EventHandler<EditEvent> {
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
         ?: throw IllegalArgumentException("Bad navigation argument")
-    private val tierWithCategoriesAndElements =
-        tierListRepository.getTierListWithCategoriesAndElementsStream(currentListId)
+    private val fullTierList =
+        listRepository.getTierListWithCategoriesAndElementsStream(currentListId)
     private val notAttachedElements =
-        tierElementRepository.getNotAttachedElementsOfListStream(currentListId)
+        elementRepository.getNotAttachedElementsOfListStream(currentListId)
     private val photoProcessing = devicePhotoRepository.imageProcessingStream
+    private val selectedCategory = MutableStateFlow<TierCategory?>(null)
 
     val uiState: StateFlow<EditUiState> =
         combine(
-            tierWithCategoriesAndElements,
+            fullTierList,
             notAttachedElements,
             photoProcessing,
-        ) { listWithCategories, elements, isPhotoProcessing ->
+            selectedCategory
+        ) { listWithCategories, elements, isPhotoProcessing, selectedCategory ->
             EditUiState(
                 notAttachedElements = elements,
                 listWithCategoriesAndElements = listWithCategories,
                 isPhotoProcessing = isPhotoProcessing,
-                tierListName = listWithCategories.tierList.name
+                tierListName = listWithCategories.tierList.name,
+                selectedCategory = selectedCategory
             )
         }.stateIn(
             viewModelScope,
@@ -71,7 +78,7 @@ class TierEditViewModel(
     override fun obtainEvent(event: EditEvent) {
         when (event) {
             is EditEvent.AddCategory -> viewModelScope.launch {
-                tierCategoryRepository.insertCategory(event.tierCategory)
+                categoryRepository.insertCategory(event.tierCategory)
             }
 
             is EditEvent.RemoveCategory -> viewModelScope.launch {
@@ -80,15 +87,22 @@ class TierEditViewModel(
                         event.tierCategory == categoryWithElements.category
                     } ?: return@launch
 
-                tierCategoryWithElements.elements.forEach { element ->
-                    tierElementRepository.insertTierElement(element.copy(categoryId = null))
-                }
-                tierCategoryRepository.deleteCategory(event.tierCategory)
+                elementRepository.insertTierElements(tierCategoryWithElements.elements.map {
+                    it.copy(
+                        categoryId = null
+                    )
+                })
+                /*tierCategoryWithElements.elements.forEach { element ->
+                    elementRepository.insertTierElement(element.copy(categoryId = null))
+                }*/
+                categoryRepository.deleteCategory(event.tierCategory)
+
+                selectedCategory.update { null }
                 //TODO("Find elements with this tierCategory id and set null value")
             }
 
             is EditEvent.ChangeTierName -> viewModelScope.launch {
-                tierListRepository.insertTierList(
+                listRepository.insertTierList(
                     uiState.value.listWithCategoriesAndElements?.tierList?.copy(
                         name = event.name
                     ) ?: return@launch
@@ -96,21 +110,21 @@ class TierEditViewModel(
             }
 
             is EditEvent.EditCategory -> viewModelScope.launch {
-                tierCategoryRepository.insertCategory(event.tierCategory)
+                categoryRepository.insertCategory(event.tierCategory)
             }
 
 
             is EditEvent.RemoveElement -> viewModelScope.launch {
-                tierElementRepository.deleteTierElement(event.tierElement)
+                elementRepository.deleteTierElement(event.tierElement)
             }
 
             is EditEvent.UnattachElementFromCategory -> viewModelScope.launch {
-                tierElementRepository.insertTierElement(event.tierElement.copy(categoryId = null))
+                elementRepository.insertTierElement(event.tierElement.copy(categoryId = null))
             }
 
             is EditEvent.AttachElementToCategory -> viewModelScope.launch {
                 with(event) {
-                    tierElementRepository.insertTierElement(tierElement.copy(categoryId = categoryId))
+                    elementRepository.insertTierElement(tierElement.copy(categoryId = categoryId))
                 }
             }
 
@@ -122,7 +136,11 @@ class TierEditViewModel(
                         imageUrl = uri.toString()
                     )
                 }
-                tierElementRepository.insertTierElements(tierElementsToAdd)
+                elementRepository.insertTierElements(tierElementsToAdd)
+            }
+
+            is EditEvent.SelectCategory -> {
+                selectedCategory.update { event.tierCategory }
             }
         }
     }
@@ -135,9 +153,9 @@ class TierEditViewModel(
                 val elementRepo = appContainer.tierElementRepository
                 val listRepo = appContainer.tierListRepository
                 TierEditViewModel(
-                    tierCategoryRepository = categoryRepo,
-                    tierListRepository = listRepo,
-                    tierElementRepository = elementRepo,
+                    categoryRepository = categoryRepo,
+                    listRepository = listRepo,
+                    elementRepository = elementRepo,
                     devicePhotoRepository = appContainer.devicePhotoRepository,
                     savedStateHandle = createSavedStateHandle()
                 )

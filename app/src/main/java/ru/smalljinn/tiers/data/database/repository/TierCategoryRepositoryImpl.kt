@@ -10,6 +10,9 @@ class TierCategoryRepositoryImpl(private val categoryDao: CategoryDao) : TierCat
         return categoryDao.insertCategory(category)
     }
 
+    override suspend fun insertCategories(categories: List<TierCategory>): List<Long> {
+        return categoryDao.insertCategories(categories)
+    }
     override suspend fun deleteCategory(category: TierCategory) {
         return categoryDao.deleteCategory(category)
     }

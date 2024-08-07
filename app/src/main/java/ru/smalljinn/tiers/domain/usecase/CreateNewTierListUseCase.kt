@@ -14,8 +14,10 @@ class CreateNewTierListUseCase(
 ) {
     suspend operator fun invoke(): Long {
         return coroutineScope {
+            //TODO adding list of categories to prevent recompositions
             val tierListId = tierListRepository.insertTierList(TierList(name = "Untitled"))
-            tierCategoryRepository.insertCategory(
+            val categoriesToAdd = mutableListOf<TierCategory>()
+            categoriesToAdd.add(
                 TierCategory(
                     tierListId = tierListId,
                     name = "S",
@@ -31,8 +33,9 @@ class CreateNewTierListUseCase(
                         position = index + 1, //because S category
                         colorArgb = getColorForTier(name)
                     )
-                tierCategoryRepository.insertCategory(category)
+                categoriesToAdd.add(category)
             }
+            tierCategoryRepository.insertCategories(categoriesToAdd.toList())
             tierListId
         }
     }

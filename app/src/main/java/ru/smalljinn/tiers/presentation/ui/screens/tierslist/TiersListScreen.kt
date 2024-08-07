@@ -86,7 +86,7 @@ fun TiersListScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val tiersScrollState = rememberLazyListState()
     val createNewTierList = {
-        viewModel.obtainEvent(TiersEvent.CreateNew(name = "Untitled"))
+        viewModel.obtainEvent(TiersEvent.CreateNew(name = context.getString(R.string.untitled_tierlist_name)))
     }
     val showAddButton by remember {
         derivedStateOf {
@@ -109,10 +109,10 @@ fun TiersListScreen(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Create tier list"
+                            contentDescription = stringResource(R.string.create_new_tier_list_cd)
                         )
                     },
-                    text = { Text(text = "Create tier list") },
+                    text = { Text(text = stringResource(R.string.create_tier_list_label)) },
                     elevation = FloatingActionButtonDefaults.elevation()
                 )
             }
@@ -149,7 +149,7 @@ fun TiersListBody(
     var tierListToDelete by remember { mutableStateOf<TierList?>(null) }
     if (dialogVisible && tierListToDelete != null)
         DeleteTierDialog(
-            tierListName = tierListToDelete?.name ?: "Error",
+            tierListName = tierListToDelete?.name ?: stringResource(R.string.get_name_error),
             onDismissRequest = {
                 dialogVisible = false
                 tierListToDelete = null
@@ -229,7 +229,7 @@ fun TiersColumn(
 @Composable
 private fun NoFoundText(searchQuery: String) {
     Text(
-        text = "Hmm, I did not see tiers contains \"$searchQuery\"",
+        text = stringResource(R.string.empty_search_results, searchQuery),
         textAlign = TextAlign.Center
     )
 }
@@ -250,7 +250,7 @@ fun SearchElement(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = "Search tier list"
+                contentDescription = stringResource(R.string.search_tier_list_by_name_cd)
             )
         },
         label = { Text(text = "Tier name") },
@@ -265,7 +265,7 @@ fun SearchElement(
                 IconButton(onClick = onClearSearchQuery) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear search query"
+                        contentDescription = stringResource(R.string.clear_search_query_button_cd),
                     )
                 }
             }
@@ -326,19 +326,19 @@ fun DeleteTierDialog(
             Icon(imageVector = Icons.Default.Delete, contentDescription = null)
         },
         title = {
-            Text(text = "Delete confirmation")
+            Text(text = stringResource(R.string.delete_confirmation_title))
         },
         text = {
-            Text(text = "Do you really want to delete $tierListName tier list?")
+            Text(text = stringResource(R.string.tier_list_delete_text, tierListName))
         },
         confirmButton = {
             Button(onClick = onConfirmDeletion) {
-                Text(text = "Delete")
+                Text(text = stringResource(R.string.delete_btn_label))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text(text = "Cancel")
+                Text(text = stringResource(R.string.cancel_btn_label))
             }
 
         }

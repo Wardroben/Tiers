@@ -13,6 +13,7 @@ sealed class EditEvent {
     data class UnattachElementFromCategory(val tierElement: TierElement) : EditEvent()
     data class AttachElementToCategory(val tierElement: TierElement, val categoryId: Long) :
         EditEvent()
+    data class SelectCategory(val tierCategory: TierCategory?) : EditEvent()
 
     data class AddImages(val images: List<Uri>) : EditEvent()
 }
