@@ -6,7 +6,7 @@ import ru.smalljinn.tiers.data.database.model.TierElement
 
 sealed class EditEvent {
     data class RemoveCategory(val tierCategory: TierCategory) : EditEvent()
-    data class AddCategory(val tierCategory: TierCategory) : EditEvent()
+    data object CreateNewCategory : EditEvent()
     data class EditCategory(val tierCategory: TierCategory) : EditEvent()
     data class ChangeTierName(val name: String) : EditEvent()
     data class RemoveElement(val tierElement: TierElement) : EditEvent()

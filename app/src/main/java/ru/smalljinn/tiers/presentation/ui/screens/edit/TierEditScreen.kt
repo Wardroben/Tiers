@@ -94,7 +94,17 @@ fun TierEditScreen(
         topBar = {
             Column {
                 //TODO textField for name
-                TopAppBar(title = { Text(text = uiState.tierListName) })
+                TopAppBar(
+                    title = { Text(text = uiState.tierListName) },
+                    actions = {
+                        IconButton(onClick = { viewModel.obtainEvent(EditEvent.CreateNewCategory) }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(R.string.create_new_category_cd)
+                            )
+                        }
+                    }
+                )
                 AnimatedVisibility(visible = uiState.isPhotoProcessing) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
@@ -198,7 +208,7 @@ fun ColorPicker(
     categoryName: String,
     onColorChanged: (Color) -> Unit
 ) {
-    var colorState by remember { mutableStateOf(color) }
+    var colorState by remember(color) { mutableStateOf(color) }
     LaunchedEffect(key1 = colorState) { onColorChanged(colorState) }
 
     Column(modifier = modifier.padding(start = 30.dp, end = 30.dp)) {
@@ -231,7 +241,7 @@ fun ColorSlider(
 ) {
     val labelWidth = remember { 60.dp }
     val spacerWidth = remember { 10.dp }
-    val intColorValue = remember { (value * 255).roundToInt().toString() }
+    val intColorValue = remember(value) { (value * 255).roundToInt().toString() }
 
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(text = name, modifier = Modifier.width(labelWidth))

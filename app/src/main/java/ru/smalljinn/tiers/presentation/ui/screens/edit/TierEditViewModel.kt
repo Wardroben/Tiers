@@ -28,6 +28,7 @@ import ru.smalljinn.tiers.util.EventHandler
 
 private const val TIER_LIST_UNTITLED_NAME = "Untitled"
 
+
 @Immutable
 data class EditUiState(
     val notAttachedElements: List<TierElement> = emptyList(),
@@ -77,8 +78,14 @@ class TierEditViewModel(
 
     override fun obtainEvent(event: EditEvent) {
         when (event) {
-            is EditEvent.AddCategory -> viewModelScope.launch {
-                categoryRepository.insertCategory(event.tierCategory)
+            EditEvent.CreateNewCategory -> viewModelScope.launch {
+                val categoryId = categoryRepository.insertCategory(
+                    TierCategory(
+                        tierListId = currentListId,
+                        position = uiState.value.listWithCategoriesAndElements?.categories?.size
+                            ?: 0
+                    )
+                )
             }
 
             is EditEvent.RemoveCategory -> viewModelScope.launch {
