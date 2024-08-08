@@ -81,6 +81,7 @@ fun TierEditScreen(
     modifier: Modifier = Modifier,
     viewModel: TierEditViewModel = viewModel(factory = TierEditViewModel.Factory)
 ) {
+    val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val mediaLauncher =
         rememberLauncherForActivityResult(contract = PickMultipleVisualMedia()) { uris ->
@@ -111,12 +112,28 @@ fun TierEditScreen(
             }
         }
     ) { innerPaddings ->
-        if (uiState.selectedCategory != null) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var sheetVisible by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(key1 = uiState.sheetState) {
+            when (uiState.sheetState) {
+                SheetState.Hidden -> {
+                    scope.launch { sheetState.hide() }.invokeOnCompletion { sheetVisible = false }
+                }
+
+                else -> sheetVisible = true
+            }
+        }
+        if (sheetVisible) {
             CategoryModalBottomSheet(
-                onDismissRequest = { viewModel.obtainEvent(EditEvent.SelectCategory(null)) },
+                onDismissRequest = { viewModel.obtainEvent(EditEvent.HideSheet) },
                 onSaveClicked = { viewModel.obtainEvent(EditEvent.EditCategory(it)) },
                 onDeleteClicked = { viewModel.obtainEvent(EditEvent.RemoveCategory(it)) },
-                category = uiState.selectedCategory
+                tierCategory = when (uiState.sheetState) {
+                    is SheetState.CategoryCreation -> uiState.sheetState.newCategory
+                    is SheetState.CategoryEditing -> uiState.sheetState.category
+                    else -> null
+                },
+                sheetState = sheetState,
             )
         }
         TierEditBody(
@@ -136,17 +153,25 @@ fun TierEditScreen(
 fun CategoryModalBottomSheet(
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
-    category: TierCategory,
+    tierCategory: TierCategory?,
     onSaveClicked: (TierCategory) -> Unit,
-    onDeleteClicked: (TierCategory) -> Unit
+    onDeleteClicked: (TierCategory) -> Unit,
+    sheetState: androidx.compose.material3.SheetState,
 ) {
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val category by remember {
+        mutableStateOf(
+            tierCategory ?: TierCategory(
+                tierListId = 1,
+                position = 0
+            )
+        )
+    }
+
     var name by rememberSaveable { mutableStateOf(category.name) }
     val error by remember(name) { mutableStateOf(name.isBlank()) }
     var color by remember { mutableStateOf(category.color) }
 
-    val hideSheet = { scope.launch { sheetState.hide() } }
     ModalBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
@@ -185,9 +210,9 @@ fun CategoryModalBottomSheet(
                 Button(
                     onClick = {
                         onSaveClicked(category.copy(name = name, colorArgb = color.toArgb()))
-                        hideSheet().invokeOnCompletion {
+                        /*hideSheet().invokeOnCompletion {
                             onDismissRequest()
-                        }
+                        }*/
                     },
                     enabled = !error
                 ) {

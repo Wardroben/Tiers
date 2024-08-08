@@ -28,6 +28,11 @@ import ru.smalljinn.tiers.util.EventHandler
 
 private const val TIER_LIST_UNTITLED_NAME = "Untitled"
 
+sealed class SheetState {
+    data object Hidden : SheetState()
+    data class CategoryCreation(val newCategory: TierCategory) : SheetState()
+    data class CategoryEditing(val category: TierCategory) : SheetState()
+}
 
 @Immutable
 data class EditUiState(
@@ -35,11 +40,17 @@ data class EditUiState(
     val listWithCategoriesAndElements: TierListWithCategoriesAndElements? = null,
     val tierListName: String = TIER_LIST_UNTITLED_NAME,
     val isPhotoProcessing: Boolean = false,
-    val selectedCategory: TierCategory? = null
-)
+    val sheetState: SheetState = SheetState.Hidden
+) {
+    val lastCategoryIndex = listWithCategoriesAndElements?.categories?.lastIndex ?: 0
+}
 
-//categories list
-//elements list
+/**
+ * Set categoryId to null for all elements to unpin them
+ */
+private fun List<TierElement>.unpinElements() =
+    this.map { element -> element.copy(categoryId = null) }
+
 class TierEditViewModel(
     private val devicePhotoRepository: DevicePhotoRepository,
     private val categoryRepository: TierCategoryRepository,
@@ -54,21 +65,23 @@ class TierEditViewModel(
     private val notAttachedElements =
         elementRepository.getNotAttachedElementsOfListStream(currentListId)
     private val photoProcessing = devicePhotoRepository.imageProcessingStream
-    private val selectedCategory = MutableStateFlow<TierCategory?>(null)
+
+    private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
 
     val uiState: StateFlow<EditUiState> =
         combine(
             fullTierList,
             notAttachedElements,
             photoProcessing,
-            selectedCategory
-        ) { listWithCategories, elements, isPhotoProcessing, selectedCategory ->
+            //selectedCategory,
+            sheetState
+        ) { listWithCategories, elements, isPhotoProcessing, sheetState ->
             EditUiState(
                 notAttachedElements = elements,
                 listWithCategoriesAndElements = listWithCategories,
                 isPhotoProcessing = isPhotoProcessing,
                 tierListName = listWithCategories.tierList.name,
-                selectedCategory = selectedCategory
+                sheetState = sheetState,
             )
         }.stateIn(
             viewModelScope,
@@ -78,34 +91,26 @@ class TierEditViewModel(
 
     override fun obtainEvent(event: EditEvent) {
         when (event) {
-            EditEvent.CreateNewCategory -> viewModelScope.launch {
-                val categoryId = categoryRepository.insertCategory(
-                    TierCategory(
-                        tierListId = currentListId,
-                        position = uiState.value.listWithCategoriesAndElements?.categories?.size
-                            ?: 0
+            EditEvent.CreateNewCategory -> sheetState.update {
+                SheetState.CategoryEditing(
+                    TierCategory.getCategoryToCreate(
+                        tierId = currentListId,
+                        position = uiState.value.lastCategoryIndex + 1
                     )
                 )
             }
 
             is EditEvent.RemoveCategory -> viewModelScope.launch {
+                sheetState.update { SheetState.Hidden }
                 val tierCategoryWithElements =
                     uiState.value.listWithCategoriesAndElements?.categories?.find { categoryWithElements ->
                         event.tierCategory == categoryWithElements.category
                     } ?: return@launch
 
-                elementRepository.insertTierElements(tierCategoryWithElements.elements.map {
-                    it.copy(
-                        categoryId = null
-                    )
-                })
-                /*tierCategoryWithElements.elements.forEach { element ->
-                    elementRepository.insertTierElement(element.copy(categoryId = null))
-                }*/
+                elementRepository.insertTierElements(tierCategoryWithElements.elements.unpinElements())
                 categoryRepository.deleteCategory(event.tierCategory)
 
-                selectedCategory.update { null }
-                //TODO("Find elements with this tierCategory id and set null value")
+                sheetState.update { SheetState.Hidden }
             }
 
             is EditEvent.ChangeTierName -> viewModelScope.launch {
@@ -117,6 +122,7 @@ class TierEditViewModel(
             }
 
             is EditEvent.EditCategory -> viewModelScope.launch {
+                sheetState.update { SheetState.Hidden }
                 categoryRepository.insertCategory(event.tierCategory)
             }
 
@@ -147,8 +153,10 @@ class TierEditViewModel(
             }
 
             is EditEvent.SelectCategory -> {
-                selectedCategory.update { event.tierCategory }
+                sheetState.update { SheetState.CategoryEditing(event.tierCategory) }
             }
+
+            is EditEvent.HideSheet -> sheetState.update { SheetState.Hidden }
         }
     }
 

@@ -6,6 +6,10 @@ import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 
 class MockCategoryRepositoryImpl : TierCategoryRepository {
+    override suspend fun insertCategories(categories: List<TierCategory>): List<Long> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun insertCategory(category: TierCategory): Long {
         TODO("Not yet implemented")
     }

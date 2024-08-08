@@ -9,6 +9,7 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
 private const val STANDARD_CATEGORY_NAME = "X"
+
 @Entity(
     "tier_categories", foreignKeys = [
         ForeignKey(
@@ -23,10 +24,16 @@ data class TierCategory(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     @ColumnInfo(index = true) val tierListId: Long,
     val name: String = STANDARD_CATEGORY_NAME,
-    val colorArgb: Int = Color.Magenta.toArgb(),
+    val colorArgb: Int = Color.LightGray.toArgb(),
     val position: Int
     //val elements: List<TierElement>
 ) {
     @Ignore
     val color: Color = Color(colorArgb)
+
+    companion object {
+        fun getCategoryToCreate(tierId: Long, position: Int) =
+            TierCategory(tierListId = tierId, position = position)
+    }
 }
+
