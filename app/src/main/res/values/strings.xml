@@ -15,4 +15,5 @@
     <string name="get_name_error">Get name error</string>
     <string name="create_new_category_cd">Create new category</string>
     <string name="cancel_creating_category_cd">Cancel creating category</string>
+    <string name="delete_dragged_image_cd">Delete dragged image</string>
 </resources>

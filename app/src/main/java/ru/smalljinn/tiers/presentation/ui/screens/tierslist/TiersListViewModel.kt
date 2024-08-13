@@ -18,18 +18,21 @@ import ru.smalljinn.tiers.TierApp
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
 import ru.smalljinn.tiers.util.EventHandler
 
 sealed class TiersState {
     data object Loading : TiersState()
     data object Empty : TiersState()
+
     @Immutable
     data class Success(val tiersList: List<TierListWithCategories>) : TiersState()
 }
 
 class TiersListViewModel(
     private val tierListRepository: TierListRepository,
-    private val createNewTierListUseCase: CreateNewTierListUseCase
+    private val createNewTierListUseCase: CreateNewTierListUseCase,
+    private val deleteTierListUseCase: DeleteTierListUseCase
 ) : ViewModel(), EventHandler<TiersEvent> {
 
     var searchQuery by mutableStateOf("")
@@ -56,7 +59,7 @@ class TiersListViewModel(
             }
 
             is TiersEvent.Delete -> viewModelScope.launch {
-                tierListRepository.deleteTierList(event.tierList)
+                deleteTierListUseCase(event.tierList)
             }
 
             is TiersEvent.CreateNew -> viewModelScope.launch {
@@ -84,7 +87,11 @@ class TiersListViewModel(
             initializer {
                 val app = (this[APPLICATION_KEY] as TierApp).appContainer
                 val repository: TierListRepository = app.tierListRepository
-                TiersListViewModel(repository, app.createNewTierListUseCase)
+                TiersListViewModel(
+                    repository,
+                    app.createNewTierListUseCase,
+                    app.deleteTierListUseCase
+                )
             }
         }
     }

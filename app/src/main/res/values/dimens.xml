@@ -6,4 +6,5 @@
     <dimen name="image_list_size">64dp</dimen>
     <dimen name="image_category_size">84dp</dimen>
     <dimen name="min_category_height">64dp</dimen>
+    <dimen name="border_width">1.dp</dimen>
 </resources>

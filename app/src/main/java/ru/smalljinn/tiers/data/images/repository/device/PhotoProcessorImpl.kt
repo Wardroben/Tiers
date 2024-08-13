@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import androidx.core.net.toFile
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,7 +23,7 @@ private const val TARGET_IMAGE_SIZE = 256F
 class PhotoProcessorImpl(
     private val appContext: Context,
 ) : PhotoProcessor {
-
+    private val outputDirectory = File(appContext.filesDir, COMPRESSED_PHOTOS_OUTPUT_DIR)
     override suspend fun compressAndSaveImages(imageUris: List<Uri>): List<Uri> =
         withContext(Dispatchers.IO) {
             //compress images
@@ -33,6 +34,27 @@ class PhotoProcessorImpl(
                 scaledBitmaps.map { bitmap -> saveCompressedImage(bitmap) }
             return@withContext savedBitmapUris
         }
+
+    override suspend fun deleteImagesFromDevice(imageUris: List<Uri>): Boolean {
+        imageUris.forEach { uri ->
+            val imageFile = uri.toFile()
+            if (imageFile.exists() && imageFile.isFile) {
+                try {
+                    imageFile.delete()
+                } catch (e: IOException) {
+                    Log.e(TAG, "Can't delete ${imageFile.name}")
+                    return false
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unexpected error ${e.message}")
+                    return false
+                }
+                Log.v(TAG, "Image deleted from device: ${imageFile.absolutePath}")
+            } else {
+                Log.v(TAG, "${imageFile.absolutePath} is not file")
+            }
+        }
+        return true
+    }
 
     private fun readImage(uri: Uri): Bitmap {
         try {
@@ -67,7 +89,6 @@ class PhotoProcessorImpl(
 
     private fun saveCompressedImage(bitmap: Bitmap): Uri {
         val fileName = "image_${UUID.randomUUID()}"
-        val outputDirectory = File(appContext.filesDir, COMPRESSED_PHOTOS_OUTPUT_DIR)
         if (!outputDirectory.exists()) outputDirectory.mkdirs()
 
         val photoFile = File(outputDirectory, fileName)
@@ -81,7 +102,9 @@ class PhotoProcessorImpl(
             }
         } catch (e: IOException) {
             Log.e(TAG, e.message.toString())
+            throw IOException(e.message)
         }
+        Log.v(TAG, "Image saved to file: ${photoFile.absolutePath}")
         return photoFile.toUri()
     }
 }

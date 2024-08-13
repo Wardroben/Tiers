@@ -11,6 +11,7 @@ interface TierListRepository {
     fun getAllListsWithCategoriesStream(): Flow<List<TierListWithCategories>>
     suspend fun getTierListById(id: Long): TierList
     suspend fun deleteTierList(tierList: TierList)
+    suspend fun deleteTierListById(listId: Long)
     suspend fun insertTierList(tierList: TierList): Long
     suspend fun changeTierListName(tierList: TierList, newName: String)
 }

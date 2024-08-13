@@ -14,4 +14,8 @@ class DevicePhotoRepositoryImpl(
         imageProcessingStream.emit(false)
         return compressedImages
     }
+
+    override suspend fun deletePhotos(uris: List<Uri>): Boolean {
+        return photoProcessor.deleteImagesFromDevice(uris)
+    }
 }

@@ -12,4 +12,6 @@ data class TierCategoryWithElements(
         entityColumn = "categoryId"
     )
     val elements: List<TierElement>
-)
+) {
+    fun getSortedByPositionElements() = elements.sortedBy { it.position }
+}

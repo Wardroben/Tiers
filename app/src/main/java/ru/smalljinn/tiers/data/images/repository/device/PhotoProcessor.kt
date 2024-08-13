@@ -4,4 +4,5 @@ import android.net.Uri
 
 interface PhotoProcessor {
     suspend fun compressAndSaveImages(imageUris: List<Uri>): List<Uri>
+    suspend fun deleteImagesFromDevice(imageUris: List<Uri>): Boolean
 }

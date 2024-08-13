@@ -24,6 +24,8 @@ import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryI
 import ru.smalljinn.tiers.data.images.source.BASE_URL
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
+import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
 
 class TierApp : Application() {
     lateinit var appContainer: AppContainer
@@ -55,8 +57,10 @@ interface AppContainer {
     val tierElementRepository: TierElementRepository
     val tierCategoryRepository: TierCategoryRepository
     val tierListRepository: TierListRepository
-    val createNewTierListUseCase: CreateNewTierListUseCase
     val networkImageRepository: NetworkImageRepository
+    val createNewTierListUseCase: CreateNewTierListUseCase
+    val deleteElementsUseCase: DeleteElementsUseCase
+    val deleteTierListUseCase: DeleteTierListUseCase
 }
 
 private class AppContainerImpl(
@@ -78,4 +82,12 @@ private class AppContainerImpl(
         get() = NetworkImageRepositoryImpl(googleSearchApi)
     override val createNewTierListUseCase: CreateNewTierListUseCase
         get() = CreateNewTierListUseCase(tierListRepository, tierCategoryRepository)
+    override val deleteElementsUseCase: DeleteElementsUseCase
+        get() = DeleteElementsUseCase(tierElementRepository, devicePhotoRepository)
+    override val deleteTierListUseCase: DeleteTierListUseCase
+        get() = DeleteTierListUseCase(
+            tierElementRepository,
+            deleteElementsUseCase,
+            tierListRepository
+        )
 }
