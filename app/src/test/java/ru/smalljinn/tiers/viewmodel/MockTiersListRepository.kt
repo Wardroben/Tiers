@@ -32,6 +32,11 @@ class MockTiersListRepository : TierListRepository {
         tiers.remove(tierList)
     }
 
+    override suspend fun deleteTierListById(listId: Long) {
+        val listToDelete = tiers.find { it.id == listId }
+        tiers.remove(listToDelete)
+    }
+
     override suspend fun insertTierList(tierList: TierList): Long {
         flow.emit(listOf(tierList))
         /*val lastElementId = tiers.size.toLong()

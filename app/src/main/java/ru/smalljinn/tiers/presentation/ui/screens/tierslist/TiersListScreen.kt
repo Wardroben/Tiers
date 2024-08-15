@@ -50,6 +50,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -73,6 +74,7 @@ import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
+import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -369,17 +371,19 @@ fun TierManageButtons(
 fun ColorsColumn(modifier: Modifier = Modifier, categories: List<TierCategory>) {
     Column(modifier = modifier.fillMaxHeight()) {
         categories.forEach { category ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .width(50.dp)
-                    .background(color = category.color),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = category.name.trim().take(1),
-                    style = MaterialTheme.typography.bodySmall
-                )
+            key(category.id) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .width(50.dp)
+                        .background(color = category.color),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextOnColor(
+                        text = category.name.trim().take(1),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }

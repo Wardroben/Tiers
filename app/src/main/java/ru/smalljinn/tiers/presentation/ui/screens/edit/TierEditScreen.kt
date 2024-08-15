@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -88,6 +89,7 @@ import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.TierElement
+import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
 import kotlin.math.roundToInt
 
 private const val DND_ELEMENT_ID_LABEL = "elementId"
@@ -276,7 +278,6 @@ fun NotAttachedImages(
                             }
                         )
                     }
-
             )
         }
     }
@@ -344,11 +345,12 @@ fun CategoryItem(
     val itemArrangement = dimensionResource(id = R.dimen.item_arrangement)
     val categoryHeight = dimensionResource(id = R.dimen.image_category_size)
     val density = LocalDensity.current.density
-    var cardHeight by remember { mutableIntStateOf(0) }
+    var cardHeight by remember { mutableIntStateOf(categoryHeight.value.toInt()) }
     val sortedElements =
         remember(categoryWithElements.elements) { categoryWithElements.elements.sortedBy { it.position } }
     Card(
         modifier = modifier
+            .defaultMinSize(minHeight = categoryHeight)
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event
@@ -366,7 +368,7 @@ fun CategoryItem(
         Row(modifier = Modifier.fillMaxWidth()) {
             //category color with name
             TierCategoryInfo(
-                modifier = Modifier.height((cardHeight / density).dp),
+                modifier = Modifier.height(cardHeight.dp),
                 category = categoryWithElements.category,
                 onClick = onCategoryClicked
             )
@@ -400,7 +402,7 @@ fun CategoryItem(
             LazyVerticalGrid(
                 modifier = Modifier
                     .heightIn(min = categoryHeight, max = 600.dp)
-                    .onSizeChanged { cardHeight = it.height },
+                    .onSizeChanged { cardHeight = (it.height / density).toInt() },
                 columns = GridCells.Adaptive(categoryHeight),
                 userScrollEnabled = true,
                 horizontalArrangement = Arrangement.spacedBy(itemArrangement),
@@ -408,6 +410,7 @@ fun CategoryItem(
             ) {
                 items(items = sortedElements, key = { it.id }) { element ->
                     ElementImage(
+                        imageUrl = element.imageUrl,
                         modifier = Modifier
                             .animateItemPlacement()
                             .size(categoryHeight)
@@ -424,34 +427,37 @@ fun CategoryItem(
                                     }
                                 )
                             },
-                        imageUrl = element.imageUrl,
                     )
                 }
             }
             /*FlowRow(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { cardHeight = (it.height / density).roundToInt() },
                 horizontalArrangement = Arrangement.spacedBy(itemArrangement),
                 verticalArrangement = Arrangement.spacedBy(itemArrangement)
             ) {
                 categoryWithElements.elements.forEach { element ->
-                    ElementImage(
-                        modifier = Modifier
-                            .size(categoryHeight)
-                            .dragAndDropSource {
-                                detectTapGestures(
-                                    onLongPress = {
-                                        startTransfer(
-                                            DragAndDropTransferData(
-                                                clipData = ClipData.newPlainText(
-                                                    "categoryElementId", element.id.toString()
+                    key(element.id) {
+                        ElementImage(
+                            modifier = Modifier
+                                .size(categoryHeight)
+                                .dragAndDropSource {
+                                    detectTapGestures(
+                                        onLongPress = {
+                                            startTransfer(
+                                                DragAndDropTransferData(
+                                                    clipData = ClipData.newPlainText(
+                                                        "categoryElementId", element.id.toString()
+                                                    )
                                                 )
                                             )
-                                        )
-                                    }
-                                )
-                            },
-                        imageUrl = element.imageUrl,
-                    )
+                                        }
+                                    )
+                                },
+                            imageUrl = element.imageUrl,
+                        )
+                    }
                 }
             }*/
         }
@@ -549,7 +555,8 @@ private fun TierCategoryInfo(
         contentAlignment = Alignment.Center
     ) {
         //TODO resizable text
-        Text(text = category.name, maxLines = 2)
+        //Text(text = category.name, maxLines = 2, color = Color.Black)
+        TextOnColor(text = category.name)
     }
 }
 
@@ -597,7 +604,6 @@ fun CategoryModalBottomSheet(
                 isError = error
             )
             //color picker
-            //TODO color picker
             ColorPicker(color = color, categoryName = name) { color = it }
             //buttons
             Row(
@@ -616,9 +622,6 @@ fun CategoryModalBottomSheet(
                 Button(
                     onClick = {
                         onSaveClicked(category.copy(name = name, colorArgb = color.toArgb()))
-                        /*hideSheet().invokeOnCompletion {
-                            onDismissRequest()
-                        }*/
                     },
                     enabled = !error
                 ) {
@@ -632,17 +635,16 @@ fun CategoryModalBottomSheet(
     }
 }
 
+
 @Composable
 fun ElementImage(modifier: Modifier = Modifier, imageUrl: String) {
     //val context = LocalContext.current
     AsyncImage(
         model = imageUrl,
-        modifier = modifier
-            .clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip))),
+        modifier = modifier.clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip))),
         contentDescription = null,
-        contentScale = ContentScale.Crop,
+        contentScale = ContentScale.Crop
     )
-
 }
 
 @Composable
@@ -664,7 +666,7 @@ fun ColorPicker(
                 .background(color = color),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = categoryName)
+            TextOnColor(text = categoryName)
         }
         ColorSlider(name = "Red", value = colorState.red) { colorState = colorState.copy(red = it) }
         ColorSlider(name = "Green", value = colorState.green) {

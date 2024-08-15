@@ -62,6 +62,7 @@ kapt {
 dependencies {
     implementation(libs.androidx.viewmodel.lifecycle)
     implementation(libs.coil)
+    //implementation(libs.glide)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
