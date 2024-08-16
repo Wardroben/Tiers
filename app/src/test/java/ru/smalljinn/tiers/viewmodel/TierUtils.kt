@@ -17,7 +17,7 @@ object TierUtils {
         return TierElement(
             id = id,
             imageUrl = imageUrl,
-            position = position,
+            position = position ?: 0,
             categoryId = tierCategoryId,
             tierListId = tierListId
         )

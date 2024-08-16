@@ -157,7 +157,7 @@ class TierEditViewModel(
                 val category =
                     uiState.value.categoriesWithElements.find { it.category.id == event.categoryId }
                         ?: return
-                val position = category.elements.size
+                val position = category.elements.lastOrNull()?.position?.let { it + 1 } ?: 0
                 viewModelScope.launch {
                     val element = elementRepository.getElementById(event.elementId)
                     if (element in category.elements) return@launch
@@ -188,6 +188,22 @@ class TierEditViewModel(
             }
 
             is EditEvent.HideSheet -> sheetState.update { SheetState.Hidden }
+
+            is EditEvent.ReorderElements -> {
+                //TODO make use case
+                viewModelScope.launch {
+                    val firstElement = elementRepository.getElementById(event.firstId)
+                    val secondElement = elementRepository.getElementById(event.secondId)
+
+                    val swappedElements = listOf(
+                        firstElement.copy(position = secondElement.position),
+                        secondElement.copy(position = firstElement.position)
+                    )
+
+                    elementRepository.insertTierElements(swappedElements)
+                }
+
+            }
         }
     }
 

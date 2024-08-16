@@ -16,4 +16,5 @@ sealed class EditEvent {
     data class SelectCategory(val tierCategory: TierCategory) : EditEvent()
     data object HideSheet : EditEvent()
     data class AddImages(val images: List<Uri>) : EditEvent()
+    data class ReorderElements(val firstId: Long, val secondId: Long) : EditEvent()
 }

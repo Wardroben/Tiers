@@ -2,6 +2,9 @@ package ru.smalljinn.tiers.presentation.ui.screens.edit
 
 import android.content.ClipData
 import android.content.ClipDescription
+import android.os.Build
+import android.util.Log
+import android.view.HapticFeedbackConstants
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
@@ -15,6 +18,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,12 +32,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -75,8 +81,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -84,12 +92,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyGridState
 import kotlin.math.roundToInt
 
 private const val DND_ELEMENT_ID_LABEL = "elementId"
@@ -171,6 +182,14 @@ fun TierEditScreen(
             },
             onElementUnpinDropped = { elementId ->
                 viewModel.obtainEvent(EditEvent.UnattachElementFromCategory(elementId))
+            },
+            onReorderElements = { firstId, secondId ->
+                viewModel.obtainEvent(
+                    EditEvent.ReorderElements(
+                        firstId = firstId,
+                        secondId = secondId
+                    )
+                )
             }
         )
     }
@@ -185,14 +204,16 @@ fun TierEditBody(
     onCategoryClicked: (TierCategory) -> Unit,
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
     onDeleteItemDropped: (Long) -> Unit,
-    onElementUnpinDropped: (Long) -> Unit
+    onElementUnpinDropped: (Long) -> Unit,
+    onReorderElements: (firstId: Long, secondId: Long) -> Unit
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         CategoriesList(
             modifier = Modifier.weight(1f),
             categories = categories,
             onCategoryClicked = onCategoryClicked,
-            onTierElementDropped = onTierElementDropped
+            onTierElementDropped = onTierElementDropped,
+            onReorderElements = onReorderElements
         )
         NotAttachedImages(
             images = notAttachedElements,
@@ -262,7 +283,7 @@ fun NotAttachedImages(
                 imageUrl = element.imageUrl,
                 modifier = Modifier
                     .animateItemPlacement()
-                    .size(imageSize)
+                    .sizeIn(maxWidth = imageSize, maxHeight = imageSize)
                     .dragAndDropSource {
                         detectTapGestures(
                             onLongPress = {
@@ -289,7 +310,8 @@ fun CategoriesList(
     modifier: Modifier = Modifier,
     categories: List<TierCategoryWithElements>,
     onCategoryClicked: (TierCategory) -> Unit,
-    onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit
+    onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
+    onReorderElements: (firstId: Long, secondId: Long) -> Unit
 ) {
     val itemArrangement = dimensionResource(id = R.dimen.item_arrangement)
     LazyColumn(
@@ -302,7 +324,8 @@ fun CategoriesList(
                 modifier = Modifier.animateItemPlacement(),
                 categoryWithElements = categoryWithElements,
                 onCategoryClicked = { onCategoryClicked(categoryWithElements.category) },
-                onTierElementDropped = onTierElementDropped
+                onTierElementDropped = onTierElementDropped,
+                onReorderElements = onReorderElements
             )
         }
     }
@@ -314,7 +337,8 @@ fun CategoryItem(
     modifier: Modifier = Modifier,
     categoryWithElements: TierCategoryWithElements,
     onCategoryClicked: () -> Unit,
-    onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit
+    onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
+    onReorderElements: (firstId: Long, secondId: Long) -> Unit
 ) {
     var isReadyToDrop by remember { mutableStateOf(false) }
     val dndCallback = remember {
@@ -346,8 +370,19 @@ fun CategoryItem(
     val categoryHeight = dimensionResource(id = R.dimen.image_category_size)
     val density = LocalDensity.current.density
     var cardHeight by remember { mutableIntStateOf(categoryHeight.value.toInt()) }
+    //TODO sort elements at data layer
     val sortedElements =
         remember(categoryWithElements.elements) { categoryWithElements.elements.sortedBy { it.position } }
+    val lazyGridState = rememberLazyGridState()
+    val view = LocalView.current
+    val reorderableLazyGridState =
+        rememberReorderableLazyGridState(lazyGridState = lazyGridState) { from, to ->
+            Log.i("DRAG", "Something happening $from - $to")
+            onReorderElements(from.key as Long, to.key as Long)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
+            }
+        }
     Card(
         modifier = modifier
             .defaultMinSize(minHeight = categoryHeight)
@@ -373,32 +408,6 @@ fun CategoryItem(
                 onClick = onCategoryClicked
             )
             //TODO positioning elements by element.position
-            /*LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                contentPadding = PaddingValues(start = 5.dp)
-            ) {
-                items(items = categoryWithElements.elements, key = { it.id }) { element ->
-                    ElementImage(
-                        modifier = Modifier
-                            .animateItemPlacement()
-                            .size(categoryHeight)
-                            .dragAndDropSource {
-                                detectTapGestures(
-                                    onLongPress = {
-                                        startTransfer(
-                                            DragAndDropTransferData(
-                                                clipData = ClipData.newPlainText(
-                                                    "categoryElementId", element.id.toString()
-                                                )
-                                            )
-                                        )
-                                    }
-                                )
-                            },
-                        imageUrl = element.imageUrl,
-                    )
-                }
-            }*/
             LazyVerticalGrid(
                 modifier = Modifier
                     .heightIn(min = categoryHeight, max = 600.dp)
@@ -406,28 +415,51 @@ fun CategoryItem(
                 columns = GridCells.Adaptive(categoryHeight),
                 userScrollEnabled = true,
                 horizontalArrangement = Arrangement.spacedBy(itemArrangement),
-                verticalArrangement = Arrangement.spacedBy(itemArrangement)
+                verticalArrangement = Arrangement.spacedBy(itemArrangement),
+                state = lazyGridState
             ) {
-                items(items = sortedElements, key = { it.id }) { element ->
-                    ElementImage(
-                        imageUrl = element.imageUrl,
-                        modifier = Modifier
-                            .animateItemPlacement()
-                            .size(categoryHeight)
-                            .dragAndDropSource {
-                                detectTapGestures(
-                                    onLongPress = {
-                                        startTransfer(
-                                            DragAndDropTransferData(
-                                                clipData = ClipData.newPlainText(
-                                                    "categoryElementId", element.id.toString()
+                itemsIndexed(
+                    items = sortedElements,
+                    key = { _, element -> element.id }) { index, element ->
+                    ReorderableItem(
+                        state = reorderableLazyGridState,
+                        key = element.id
+                    ) {
+                        val interactionSource = remember { MutableInteractionSource() }
+                        ElementImage(
+                            imageUrl = element.imageUrl,
+                            modifier = Modifier
+                                .size(categoryHeight)
+                                .draggableHandle(
+                                    onDragStarted = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                            view.performHapticFeedback(HapticFeedbackConstants.DRAG_START)
+                                        }
+                                        Log.i("DRAG", "drag started $element")
+                                    },
+                                    onDragStopped = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                            view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
+                                        }
+                                        Log.i("DRAG", "drag stopped $element")
+                                    },
+                                    interactionSource = interactionSource
+                                )
+                                .dragAndDropSource {
+                                    detectTapGestures(
+                                        onLongPress = {
+                                            startTransfer(
+                                                DragAndDropTransferData(
+                                                    clipData = ClipData.newPlainText(
+                                                        "categoryElementId", element.id.toString()
+                                                    )
                                                 )
                                             )
-                                        )
-                                    }
-                                )
-                            },
-                    )
+                                        }
+                                    )
+                                },
+                        )
+                    }
                 }
             }
             /*FlowRow(
@@ -638,10 +670,14 @@ fun CategoryModalBottomSheet(
 
 @Composable
 fun ElementImage(modifier: Modifier = Modifier, imageUrl: String) {
-    //val context = LocalContext.current
+    val context = LocalContext.current
     AsyncImage(
-        model = imageUrl,
-        modifier = modifier.clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip))),
+        model = ImageRequest.Builder(context)
+            .data(imageUrl)
+            .crossfade(true)
+            .build(),
+        modifier = modifier
+            .clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip))),
         contentDescription = null,
         contentScale = ContentScale.Crop
     )

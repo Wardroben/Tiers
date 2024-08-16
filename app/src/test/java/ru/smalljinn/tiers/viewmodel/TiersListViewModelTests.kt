@@ -16,6 +16,8 @@ import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
+import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersListViewModel
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersState
 import java.io.IOException
@@ -31,9 +33,15 @@ class TiersListViewModelTests {
     fun createDb() {
         categoryRepository = MockCategoryRepositoryImpl()
         tierRepository = MockTiersListRepository()
+        val elementRepository = MockElementRepository()
+        val photoRepository = MockPhotoRepository()
+        val deleteElementsUseCase = DeleteElementsUseCase(elementRepository, photoRepository)
+        val deleteTierListUseCase =
+            DeleteTierListUseCase(elementRepository, deleteElementsUseCase, tierRepository)
         viewmodel = TiersListViewModel(
-            tierRepository,
-            createNewTierListUseCase = CreateNewTierListUseCase(tierRepository, categoryRepository)
+            tierListRepository = tierRepository,
+            createNewTierListUseCase = CreateNewTierListUseCase(tierRepository, categoryRepository),
+            deleteTierListUseCase = deleteTierListUseCase
         )
     }
 
@@ -69,10 +77,8 @@ class TiersListViewModelTests {
         assert((viewModelUiState as TiersState.Success).tiersList.isNotEmpty())
         assertEquals(viewModelUiState.tiersList.first().name, newListName)*/
         val fakeRepo = MockTiersListRepository()
-        val vm = TiersListViewModel(
-            fakeRepo,
-            createNewTierListUseCase = CreateNewTierListUseCase(tierRepository, categoryRepository)
-        )
+
+        val vm = viewmodel
         val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
             vm.uiState.collect {}
         }
