@@ -21,4 +21,8 @@ class MockCategoryRepositoryImpl : TierCategoryRepository {
     override fun getCategoriesWithElementsStream(): Flow<List<TierCategoryWithElements>> {
         TODO("Not yet implemented")
     }
+
+    override fun getCategoriesWithElementsOfListStream(listId: Long): Flow<List<TierCategoryWithElements>> {
+        TODO("Not yet implemented")
+    }
 }

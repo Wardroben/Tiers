@@ -15,7 +15,7 @@ object TierUtils {
         tierListId: Long
     ): TierElement {
         return TierElement(
-            id = id,
+            elementId = id,
             imageUrl = imageUrl,
             position = position ?: 0,
             categoryId = tierCategoryId,
@@ -47,7 +47,7 @@ object TierUtils {
     ): List<TierElement> {
         val elements = mutableListOf<TierElement>()
         tierCategories.forEach { category ->
-            elements.addAll(createTierElements(countElementsForCategory, category.id, ))
+            elements.addAll(createTierElements(countElementsForCategory, category.elementId, ))
         }
         return elements
     }*/

@@ -22,12 +22,12 @@ interface ElementDao {
     @Delete
     suspend fun deleteElements(elements: List<TierElement>)
 
-    @Query("SELECT * FROM tier_elements WHERE id = :id")
+    @Query("SELECT * FROM tier_element WHERE element_id = :id")
     suspend fun getElementById(id: Long): TierElement
 
-    @Query("SELECT * FROM tier_elements WHERE tierListId = :listId AND categoryId is NULL")
+    @Query("SELECT * FROM tier_element WHERE tier_list_id = :listId AND category_id is NULL")
     fun getUnassertedElementsStream(listId: Long): Flow<List<TierElement>>
 
-    @Query("SELECT * FROM tier_elements WHERE tierListId = :listId")
+    @Query("SELECT * FROM tier_element WHERE tier_list_id = :listId")
     suspend fun getTierListElements(listId: Long): List<TierElement>
 }

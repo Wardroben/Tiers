@@ -23,6 +23,10 @@ interface CategoryDao {
     suspend fun deleteCategory(category: TierCategory)
 
     @Transaction
-    @Query("SELECT * FROM tier_categories")
+    @Query("SELECT * FROM tier_category ORDER BY position ASC")
     fun getCategoriesWithElementsStream(): Flow<List<TierCategoryWithElements>>
+
+    @Transaction
+    @Query("SELECT * FROM tier_category WHERE tier_list_id = :listId ORDER BY position ASC")
+    fun getCategoriesWithElementsOfListStream(listId: Long): Flow<List<TierCategoryWithElements>>
 }

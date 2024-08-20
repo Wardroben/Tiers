@@ -9,4 +9,5 @@ interface TierCategoryRepository {
     suspend fun insertCategory(category: TierCategory): Long
     suspend fun deleteCategory(category: TierCategory)
     fun getCategoriesWithElementsStream(): Flow<List<TierCategoryWithElements>>
+    fun getCategoriesWithElementsOfListStream(listId: Long): Flow<List<TierCategoryWithElements>>
 }

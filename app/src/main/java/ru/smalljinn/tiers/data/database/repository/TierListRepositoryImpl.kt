@@ -38,4 +38,8 @@ class TierListRepositoryImpl(private val tierListDao: TierListDao) : TierListRep
     override fun getAllListsWithCategoriesStream(): Flow<List<TierListWithCategories>> {
         return tierListDao.getAllListsWithCategoriesStream()
     }
+
+    override fun getTierListNameStream(listId: Long): Flow<String> {
+        return tierListDao.getTierListNameStream(listId)
+    }
 }

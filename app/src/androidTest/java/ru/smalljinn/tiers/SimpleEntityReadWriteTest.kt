@@ -81,7 +81,7 @@ class SimpleEntityReadWriteTest {
 
         tierElementDao.insertElement(
             tierElement.copy(
-                id = insertedElementId,
+                elementId = insertedElementId,
                 categoryId = insertedTierCategoryId
             )
         )

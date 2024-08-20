@@ -10,7 +10,7 @@ data class TierListWithCategoriesAndElements(
     @Relation(
         entity = TierCategory::class,
         parentColumn = "id",
-        entityColumn = "tierListId"
+        entityColumn = "tier_list_id"
     )
     val categories: List<TierCategoryWithElements>
 ) {

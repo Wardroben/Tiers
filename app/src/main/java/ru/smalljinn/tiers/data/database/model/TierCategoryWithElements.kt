@@ -9,9 +9,12 @@ data class TierCategoryWithElements(
     @Embedded val category: TierCategory,
     @Relation(
         parentColumn = "id",
-        entityColumn = "categoryId"
+        entityColumn = "category_id"
     )
     val elements: List<TierElement>
 ) {
     fun getSortedByPositionElements() = elements.sortedBy { it.position }
 }
+
+fun TierCategoryWithElements.getWithSortedElements() =
+    TierCategoryWithElements(category, this.getSortedByPositionElements())

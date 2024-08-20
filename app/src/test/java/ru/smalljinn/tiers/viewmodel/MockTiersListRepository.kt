@@ -24,8 +24,12 @@ class MockTiersListRepository : TierListRepository {
         TODO("Not yet implemented")
     }
 
+    override fun getTierListNameStream(listId: Long): Flow<String> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getTierListById(id: Long): TierList {
-        return tiers.find { it.id == id } ?: throw Exception("No list finded")
+        return tiers.find { it.id == id } ?: throw Exception("No list found")
     }
 
     override suspend fun deleteTierList(tierList: TierList) {
@@ -40,7 +44,7 @@ class MockTiersListRepository : TierListRepository {
     override suspend fun insertTierList(tierList: TierList): Long {
         flow.emit(listOf(tierList))
         /*val lastElementId = tiers.size.toLong()
-        tiers.add(tierList.copy(id = lastElementId))*/
+        tiers.add(tierList.copy(elementId = lastElementId))*/
         return 0
     }
 

@@ -15,7 +15,10 @@ class DeleteTierListUseCase(
         return coroutineScope {
             val listElements = elementRepository.getListElements(tierListId)
             if (deleteElementsUseCase(listElements)) listRepository.deleteTierListById(tierListId)
-            else Log.e(TAG, "Tierlist id:$tierListId not deleted because error deleting photos")
+            else Log.e(
+                TAG,
+                "Tierlist elementId:$tierListId not deleted because error deleting photos"
+            )
         }
     }
 

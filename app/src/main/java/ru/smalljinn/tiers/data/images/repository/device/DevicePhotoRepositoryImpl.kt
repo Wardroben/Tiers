@@ -9,7 +9,6 @@ class DevicePhotoRepositoryImpl(
     override val imageProcessingStream: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override suspend fun insertPhotos(uris: List<Uri>): List<Uri> {
         imageProcessingStream.emit(true)
-        //val uris = urls.map { url -> Uri.parse(url) }
         val compressedImages = photoProcessor.compressAndSaveImages(uris)
         imageProcessingStream.emit(false)
         return compressedImages

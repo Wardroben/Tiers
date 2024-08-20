@@ -12,28 +12,29 @@ import ru.smalljinn.tiers.data.database.model.TierListWithCategoriesAndElements
 
 @Dao
 interface TierListDao {
-    @Upsert(
-        //onConflict = OnConflictStrategy.REPLACE
-    )
+    @Upsert
     suspend fun insertTierList(tierList: TierList): Long
 
     @Delete
     suspend fun deleteTierList(tierList: TierList)
 
-    @Query("DELETE FROM tier_lists WHERE id = :listId")
+    @Query("DELETE FROM tier_list WHERE id = :listId")
     suspend fun deleteTierListById(listId: Long)
 
-    @Query("SELECT * FROM tier_lists WHERE id = :id")
+    @Query("SELECT * FROM tier_list WHERE id = :id")
     suspend fun getTierListById(id: Long): TierList
 
-    @Query("SELECT * FROM tier_lists")
+    @Query("SELECT * FROM tier_list")
     fun getTierListsStream(): Flow<List<TierList>>
 
     @Transaction
-    @Query("SELECT * FROM tier_lists WHERE id = :id")
+    @Query("SELECT * FROM tier_list WHERE id = :id")
     fun getTierListWithCategoriesAndElementsStream(id: Long): Flow<TierListWithCategoriesAndElements>
 
     @Transaction
-    @Query("SELECT * FROM tier_lists")
+    @Query("SELECT * FROM tier_list")
     fun getAllListsWithCategoriesStream(): Flow<List<TierListWithCategories>>
+
+    @Query("SELECT name FROM tier_list WHERE id = :listId")
+    fun getTierListNameStream(listId: Long): Flow<String>
 }

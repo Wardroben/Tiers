@@ -278,7 +278,7 @@ fun NotAttachedImages(
         contentPadding = PaddingValues(itemArrangement)
     ) {
         item { AddDeleteImageItem(onDeleteItemDropped = onDeleteItemDropped) { onAddImageClicked() } }
-        items(items = images, key = { it.id }) { element ->
+        items(items = images, key = { it.elementId }) { element ->
             ElementImage(
                 imageUrl = element.imageUrl,
                 modifier = Modifier
@@ -292,7 +292,7 @@ fun NotAttachedImages(
                                     DragAndDropTransferData(
                                         ClipData.newPlainText(
                                             DND_ELEMENT_ID_LABEL,
-                                            element.id.toString()
+                                            element.elementId.toString()
                                         )
                                     )
                                 )
@@ -371,8 +371,9 @@ fun CategoryItem(
     val density = LocalDensity.current.density
     var cardHeight by remember { mutableIntStateOf(categoryHeight.value.toInt()) }
     //TODO sort elements at data layer
-    val sortedElements =
-        remember(categoryWithElements.elements) { categoryWithElements.elements.sortedBy { it.position } }
+    /*val sortedElements = remember(categoryWithElements.elements) {
+            categoryWithElements.elements.sortedBy { it.position }
+        }*/
     val lazyGridState = rememberLazyGridState()
     val view = LocalView.current
     val reorderableLazyGridState =
@@ -419,11 +420,11 @@ fun CategoryItem(
                 state = lazyGridState
             ) {
                 itemsIndexed(
-                    items = sortedElements,
-                    key = { _, element -> element.id }) { index, element ->
+                    items = categoryWithElements.elements,
+                    key = { _, element -> element.elementId }) { index, element ->
                     ReorderableItem(
                         state = reorderableLazyGridState,
-                        key = element.id
+                        key = element.elementId
                     ) {
                         val interactionSource = remember { MutableInteractionSource() }
                         ElementImage(
@@ -451,7 +452,8 @@ fun CategoryItem(
                                             startTransfer(
                                                 DragAndDropTransferData(
                                                     clipData = ClipData.newPlainText(
-                                                        "categoryElementId", element.id.toString()
+                                                        "categoryElementId",
+                                                        element.elementId.toString()
                                                     )
                                                 )
                                             )
@@ -470,7 +472,7 @@ fun CategoryItem(
                 verticalArrangement = Arrangement.spacedBy(itemArrangement)
             ) {
                 categoryWithElements.elements.forEach { element ->
-                    key(element.id) {
+                    key(element.elementId) {
                         ElementImage(
                             modifier = Modifier
                                 .size(categoryHeight)
@@ -480,7 +482,7 @@ fun CategoryItem(
                                             startTransfer(
                                                 DragAndDropTransferData(
                                                     clipData = ClipData.newPlainText(
-                                                        "categoryElementId", element.id.toString()
+                                                        "categoryElementId", element.elementId.toString()
                                                     )
                                                 )
                                             )

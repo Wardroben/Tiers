@@ -9,7 +9,7 @@ data class TierListWithCategories(
     @Embedded val list: TierList,
     @Relation(
         parentColumn = "id",
-        entityColumn = "tierListId"
+        entityColumn = "tier_list_id"
     )
     val categories: List<TierCategory>
 )

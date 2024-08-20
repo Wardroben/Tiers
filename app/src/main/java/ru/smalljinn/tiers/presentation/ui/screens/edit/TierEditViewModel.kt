@@ -41,7 +41,6 @@ sealed class SheetState {
 data class EditUiState(
     val notAttachedElements: List<TierElement> = emptyList(),
     val categoriesWithElements: List<TierCategoryWithElements> = emptyList(),
-    val currentTierList: TierList? = null,
     //val listWithCategoriesAndElements: TierListWithCategoriesAndElements? = null,
     val tierListName: String = TIER_LIST_UNTITLED_NAME,
     val isPhotoProcessing: Boolean = false,
@@ -67,28 +66,34 @@ class TierEditViewModel(
 ) : ViewModel(), EventHandler<EditEvent> {
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
         ?: throw IllegalArgumentException("Bad navigation argument")
+
     private val fullTierList =
         listRepository.getTierListWithCategoriesAndElementsStream(currentListId)
     private val notAttachedElements =
         elementRepository.getNotAttachedElementsOfListStream(currentListId)
     private val photoProcessing = devicePhotoRepository.imageProcessingStream
 
+    private val tierListNameStream = listRepository.getTierListNameStream(currentListId)
+    private val categoriesWithElementsStream =
+        categoryRepository.getCategoriesWithElementsOfListStream(currentListId)
+
+
     private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
 
     val uiState: StateFlow<EditUiState> =
         combine(
-            fullTierList,
+            categoriesWithElementsStream,
             notAttachedElements,
             photoProcessing,
-            sheetState
-        ) { listWithCategories, elements, isPhotoProcessing, sheetState ->
+            sheetState,
+            tierListNameStream,
+        ) { categoriesWithElements, elements, isPhotoProcessing, sheetState, listName ->
             EditUiState(
-                currentTierList = listWithCategories.tierList,
+                //currentTierList = TierList(currentListId, listName),
                 notAttachedElements = elements,
-                categoriesWithElements = listWithCategories.categories,
-                //listWithCategoriesAndElements = listWithCategories,
+                categoriesWithElements = categoriesWithElements,
                 isPhotoProcessing = isPhotoProcessing,
-                tierListName = listWithCategories.tierList.name,
+                tierListName = listName,
                 sheetState = sheetState,
             )
         }.stateIn(
@@ -123,7 +128,8 @@ class TierEditViewModel(
 
             is EditEvent.ChangeTierName -> viewModelScope.launch {
                 listRepository.insertTierList(
-                    uiState.value.currentTierList?.copy(name = event.name) ?: return@launch
+                    //uiState.value.currentTierList?.copy(name = event.name) ?: return@launch
+                    TierList(id = currentListId, uiState.value.tierListName)
                 )
             }
 
@@ -144,7 +150,7 @@ class TierEditViewModel(
             is EditEvent.UnattachElementFromCategory -> {
                 val elementInUnpinnedList =
                     uiState.value.notAttachedElements.find { element ->
-                        element.id == event.elementId
+                        element.elementId == event.elementId
                     }
                 if (elementInUnpinnedList != null) return
                 viewModelScope.launch {

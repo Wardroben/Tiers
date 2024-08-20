@@ -11,10 +11,10 @@ import androidx.room.PrimaryKey
 private const val STANDARD_CATEGORY_NAME = "X"
 
 @Entity(
-    "tier_categories", foreignKeys = [
+    "tier_category", foreignKeys = [
         ForeignKey(
             TierList::class,
-            childColumns = ["tierListId"],
+            childColumns = ["tier_list_id"],
             parentColumns = ["id"],
             onDelete = ForeignKey.CASCADE
         ),
@@ -22,9 +22,9 @@ private const val STANDARD_CATEGORY_NAME = "X"
 )
 data class TierCategory(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    @ColumnInfo(index = true) val tierListId: Long,
+    @ColumnInfo(index = true, name = "tier_list_id") val tierListId: Long,
     val name: String = STANDARD_CATEGORY_NAME,
-    val colorArgb: Int = Color.LightGray.toArgb(),
+    @ColumnInfo(name = "color_argb") val colorArgb: Int = Color.LightGray.toArgb(),
     val position: Int
     //val elements: List<TierElement>
 ) {
