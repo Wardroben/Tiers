@@ -1,5 +1,8 @@
 package ru.smalljinn.tiers.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -20,7 +23,19 @@ fun TierNavHost(
     NavHost(
         modifier = modifier,
         navController = navHostController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Up,
+                spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMediumLow)
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Down,
+                spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
+            )
+        }
     ) {
         composable(route = NavigationDestination.TiersList.route) {
             TiersListScreen(
@@ -32,8 +47,7 @@ fun TierNavHost(
         composable(
             route = NavigationDestination.Edit.route,
             arguments = listOf(navArgument(EDIT_TIER_NAV_ARGUMENT) { type = NavType.LongType })
-        ) { navBackStackEntry ->
-            val listId = navBackStackEntry.arguments?.getLong(EDIT_TIER_NAV_ARGUMENT)
+        ) {
             TierEditScreen()
         }
     }

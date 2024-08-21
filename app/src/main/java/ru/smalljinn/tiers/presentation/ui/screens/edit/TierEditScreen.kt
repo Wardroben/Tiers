@@ -38,10 +38,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text2.BasicTextField2
+import androidx.compose.foundation.text2.input.TextFieldLineLimits
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Delete
@@ -51,6 +54,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -83,11 +87,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -99,13 +106,14 @@ import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
+import ru.smalljinn.tiers.presentation.ui.screens.components.keyboardAsState
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import kotlin.math.roundToInt
 
 private const val DND_ELEMENT_ID_LABEL = "elementId"
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TierEditScreen(
     modifier: Modifier = Modifier,
@@ -119,14 +127,19 @@ fun TierEditScreen(
                 viewModel.obtainEvent(EditEvent.AddImages(uris))
             }
         }
-
+    val focusManager = LocalFocusManager.current
+    val isKeyboardOpened = keyboardAsState()
+    if (!isKeyboardOpened.value) focusManager.clearFocus()
     Scaffold(
         modifier = modifier,
         topBar = {
             Column {
-                //TODO textField for name
                 TopAppBar(
-                    title = { Text(text = uiState.tierListName) },
+                    title = {
+                        EditableTierName(uiState.tierListName) { text ->
+                            viewModel.obtainEvent(EditEvent.ChangeTierName(text))
+                        }
+                    },
                     actions = {
                         IconButton(onClick = { viewModel.obtainEvent(EditEvent.CreateNewCategory) }) {
                             Icon(
@@ -193,6 +206,27 @@ fun TierEditScreen(
             }
         )
     }
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun EditableTierName(
+    listName: String,
+    onNameChanged: (String) -> Unit,
+) {
+    BasicTextField2(
+        value = listName,
+        onValueChange = onNameChanged,
+        textStyle = MaterialTheme.typography.titleLarge.copy(color = LocalContentColor.current),
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Sentences,
+            imeAction = ImeAction.Done
+        ),
+        lineLimits = TextFieldLineLimits.SingleLine,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = dimensionResource(id = R.dimen.textfield_padding))
+    )
 }
 
 @Composable
@@ -283,7 +317,12 @@ fun NotAttachedImages(
                 imageUrl = element.imageUrl,
                 modifier = Modifier
                     .animateItemPlacement()
-                    .sizeIn(maxWidth = imageSize, maxHeight = imageSize)
+                    .sizeIn(
+                        minWidth = imageSize,
+                        maxHeight = imageSize,
+                        minHeight = imageSize - 1.dp,
+                        maxWidth = imageSize + 1.dp
+                    )
                     .dragAndDropSource {
                         detectTapGestures(
                             onLongPress = {
@@ -411,17 +450,20 @@ fun CategoryItem(
             //TODO positioning elements by element.position
             LazyVerticalGrid(
                 modifier = Modifier
-                    .heightIn(min = categoryHeight, max = 600.dp)
+                    .heightIn(min = categoryHeight, max = 800.dp)
                     .onSizeChanged { cardHeight = (it.height / density).toInt() },
                 columns = GridCells.Adaptive(categoryHeight),
                 userScrollEnabled = true,
-                horizontalArrangement = Arrangement.spacedBy(itemArrangement),
+                horizontalArrangement = Arrangement.spacedBy(
+                    itemArrangement,
+                    Alignment.CenterHorizontally
+                ),
                 verticalArrangement = Arrangement.spacedBy(itemArrangement),
                 state = lazyGridState
             ) {
-                itemsIndexed(
+                items(
                     items = categoryWithElements.elements,
-                    key = { _, element -> element.elementId }) { index, element ->
+                    key = { element -> element.elementId }) { element ->
                     ReorderableItem(
                         state = reorderableLazyGridState,
                         key = element.elementId
@@ -430,21 +472,11 @@ fun CategoryItem(
                         ElementImage(
                             imageUrl = element.imageUrl,
                             modifier = Modifier
-                                .size(categoryHeight)
-                                .draggableHandle(
-                                    onDragStarted = {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                            view.performHapticFeedback(HapticFeedbackConstants.DRAG_START)
-                                        }
-                                        Log.i("DRAG", "drag started $element")
-                                    },
-                                    onDragStopped = {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                            view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
-                                        }
-                                        Log.i("DRAG", "drag stopped $element")
-                                    },
-                                    interactionSource = interactionSource
+                                .sizeIn(
+                                    minWidth = categoryHeight,
+                                    maxHeight = categoryHeight,
+                                    minHeight = categoryHeight - 1.dp,
+                                    maxWidth = categoryHeight + 1.dp
                                 )
                                 .dragAndDropSource {
                                     detectTapGestures(
@@ -459,7 +491,22 @@ fun CategoryItem(
                                             )
                                         }
                                     )
-                                },
+                                }
+                                .draggableHandle(
+                                    onDragStarted = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                            view.performHapticFeedback(HapticFeedbackConstants.DRAG_START)
+                                        }
+                                        Log.i("DRAG", "drag started $element")
+                                    },
+                                    onDragStopped = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                            view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
+                                        }
+                                        Log.i("DRAG", "drag stopped $element")
+                                    },
+                                    interactionSource = interactionSource
+                                ),
                         )
                     }
                 }
@@ -676,7 +723,7 @@ fun ElementImage(modifier: Modifier = Modifier, imageUrl: String) {
     AsyncImage(
         model = ImageRequest.Builder(context)
             .data(imageUrl)
-            .crossfade(true)
+            .crossfade(false)
             .build(),
         modifier = modifier
             .clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip))),

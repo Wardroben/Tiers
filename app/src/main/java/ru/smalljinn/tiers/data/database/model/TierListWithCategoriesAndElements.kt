@@ -13,6 +13,4 @@ data class TierListWithCategoriesAndElements(
         entityColumn = "tier_list_id"
     )
     val categories: List<TierCategoryWithElements>
-) {
-    fun getSortedCategoriesByPosition() = categories.sortedBy { it.category.position }
-}
+)

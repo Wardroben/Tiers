@@ -16,4 +16,7 @@
     <string name="get_name_error">Ошибка получения названия</string>
     <string name="create_new_category_cd">Создать новую категорию</string>
     <string name="cancel_creating_category_cd">Отменить создание категории</string>
+    <string name="delete_dragged_image_cd">Убрать перемещаемое изображение</string>
+    <string name="empty_lists_label">Нет созданных тир листов. Время творить!</string>
+    <string name="create_tier_list">Добавить новый</string>
 </resources>

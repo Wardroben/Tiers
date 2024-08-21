@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -392,12 +393,14 @@ fun ColorsColumn(modifier: Modifier = Modifier, categories: List<TierCategory>) 
 @Composable
 fun EmptyBody(modifier: Modifier = Modifier, onCreateNewClicked: () -> Unit) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(dimensionResource(id = R.dimen.item_arrangement)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp, alignment = Alignment.CenterVertically)
     ) {
         Text(
-            text = "No tier lists created. It's time to creativity!",
+            text = stringResource(R.string.empty_lists_label),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center
         )
@@ -408,7 +411,7 @@ fun EmptyBody(modifier: Modifier = Modifier, onCreateNewClicked: () -> Unit) {
 @Composable
 private fun CreateNewTierButton(onCreateNewClicked: () -> Unit) {
     Button(onClick = onCreateNewClicked) {
-        Text(text = "Create tier list")
+        Text(text = stringResource(R.string.create_tier_list))
     }
 }
 

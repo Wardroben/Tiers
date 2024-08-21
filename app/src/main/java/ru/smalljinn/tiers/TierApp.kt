@@ -23,9 +23,11 @@ import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryImpl
 import ru.smalljinn.tiers.data.images.source.BASE_URL
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
+import ru.smalljinn.tiers.data.images.source.JSON_FORMAT
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
+
 
 class TierApp : Application() {
     lateinit var appContainer: AppContainer
@@ -37,7 +39,7 @@ class TierApp : Application() {
         val tierCategoryDao = db.categoryDao()
         val tierElementDao = db.elementDao()
         val retrofit = Retrofit.Builder()
-            .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
+            .addConverterFactory(Json.asConverterFactory(JSON_FORMAT.toMediaType()))
             .baseUrl(BASE_URL)
             .build()
         val googleSearchService = retrofit.create(GoogleSearchApi::class.java)

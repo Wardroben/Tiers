@@ -41,13 +41,11 @@ sealed class SheetState {
 data class EditUiState(
     val notAttachedElements: List<TierElement> = emptyList(),
     val categoriesWithElements: List<TierCategoryWithElements> = emptyList(),
-    //val listWithCategoriesAndElements: TierListWithCategoriesAndElements? = null,
     val tierListName: String = TIER_LIST_UNTITLED_NAME,
     val isPhotoProcessing: Boolean = false,
     val sheetState: SheetState = SheetState.Hidden
 ) {
     val lastCategoryIndex = categoriesWithElements.lastIndex
-    //fun lastElementPosition(categoryId: Long) = categoriesWithElements.
 }
 
 /**
@@ -67,18 +65,15 @@ class TierEditViewModel(
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
         ?: throw IllegalArgumentException("Bad navigation argument")
 
-    private val fullTierList =
-        listRepository.getTierListWithCategoriesAndElementsStream(currentListId)
     private val notAttachedElements =
         elementRepository.getNotAttachedElementsOfListStream(currentListId)
-    private val photoProcessing = devicePhotoRepository.imageProcessingStream
-
     private val tierListNameStream = listRepository.getTierListNameStream(currentListId)
     private val categoriesWithElementsStream =
         categoryRepository.getCategoriesWithElementsOfListStream(currentListId)
 
-
     private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
+
+    private val photoProcessing = devicePhotoRepository.imageProcessingStream
 
     val uiState: StateFlow<EditUiState> =
         combine(
@@ -89,7 +84,6 @@ class TierEditViewModel(
             tierListNameStream,
         ) { categoriesWithElements, elements, isPhotoProcessing, sheetState, listName ->
             EditUiState(
-                //currentTierList = TierList(currentListId, listName),
                 notAttachedElements = elements,
                 categoriesWithElements = categoriesWithElements,
                 isPhotoProcessing = isPhotoProcessing,
@@ -126,11 +120,11 @@ class TierEditViewModel(
                 sheetState.update { SheetState.Hidden }
             }
 
-            is EditEvent.ChangeTierName -> viewModelScope.launch {
-                listRepository.insertTierList(
-                    //uiState.value.currentTierList?.copy(name = event.name) ?: return@launch
-                    TierList(id = currentListId, uiState.value.tierListName)
-                )
+            is EditEvent.ChangeTierName -> {
+                if (event.name.isBlank()) return
+                viewModelScope.launch {
+                    listRepository.insertTierList(TierList(id = currentListId, event.name))
+                }
             }
 
             is EditEvent.EditCategory -> {
