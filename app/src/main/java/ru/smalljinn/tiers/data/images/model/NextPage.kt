@@ -1,5 +1,8 @@
 package ru.smalljinn.tiers.data.images.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class NextPage(
     val count: Int,
     val cx: String,

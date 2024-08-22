@@ -1,5 +1,8 @@
 package ru.smalljinn.tiers.data.images.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Image(
     val byteSize: Int,
     val contextLink: String,

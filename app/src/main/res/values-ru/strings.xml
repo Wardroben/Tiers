@@ -19,4 +19,7 @@
     <string name="delete_dragged_image_cd">Убрать перемещаемое изображение</string>
     <string name="empty_lists_label">Нет созданных тир листов. Время творить!</string>
     <string name="create_tier_list">Добавить новый</string>
+    <string name="category_name_label">Название категории</string>
+    <string name="search_images_label">Поиск фото</string>
+    <string name="search_images_via_internet">Поиск фото в Интернете</string>
 </resources>

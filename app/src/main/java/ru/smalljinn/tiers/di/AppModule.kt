@@ -22,6 +22,7 @@ import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepositoryImpl
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepositoryImpl
+import ru.smalljinn.tiers.data.images.repository.device.PhotoProcessor
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryImpl
 import ru.smalljinn.tiers.data.images.source.BASE_URL
@@ -71,6 +72,9 @@ object AppModule {
         retrofit.create(GoogleSearchApi::class.java)
 
     @Provides
-    fun provideSearchRepository(googleSearchService: GoogleSearchApi): NetworkImageRepository =
-        NetworkImageRepositoryImpl(googleSearchService)
+    fun provideSearchRepository(
+        googleSearchService: GoogleSearchApi,
+        photoProcessor: PhotoProcessor
+    ): NetworkImageRepository =
+        NetworkImageRepositoryImpl(googleSearchService, photoProcessor)
 }

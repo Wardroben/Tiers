@@ -2,6 +2,8 @@ package ru.smalljinn.tiers.presentation.ui.screens.edit
 
 import android.content.ClipData
 import android.content.ClipDescription
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.util.Log
 import android.view.HapticFeedbackConstants
@@ -34,19 +36,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text2.BasicTextField2
 import androidx.compose.foundation.text2.input.TextFieldLineLimits
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -98,8 +104,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.request.SuccessResult
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
@@ -113,7 +121,7 @@ import kotlin.math.roundToInt
 
 private const val DND_ELEMENT_ID_LABEL = "elementId"
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TierEditScreen(
     modifier: Modifier = Modifier,
@@ -129,18 +137,24 @@ fun TierEditScreen(
         }
     val focusManager = LocalFocusManager.current
     val isKeyboardOpened = keyboardAsState()
-    if (!isKeyboardOpened.value) focusManager.clearFocus()
     Scaffold(
         modifier = modifier,
         topBar = {
             Column {
                 TopAppBar(
                     title = {
+                        if (!isKeyboardOpened.value) focusManager.clearFocus()
                         EditableTierName(uiState.tierListName) { text ->
                             viewModel.obtainEvent(EditEvent.ChangeTierName(text))
                         }
                     },
                     actions = {
+                        IconButton(onClick = { viewModel.obtainEvent(EditEvent.OpenSearchSheet) }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = stringResource(R.string.search_images_via_internet)
+                            )
+                        }
                         IconButton(onClick = { viewModel.obtainEvent(EditEvent.CreateNewCategory) }) {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -167,17 +181,41 @@ fun TierEditScreen(
             }
         }
         if (sheetVisible) {
-            CategoryModalBottomSheet(
-                onDismissRequest = { viewModel.obtainEvent(EditEvent.HideSheet) },
-                onSaveClicked = { viewModel.obtainEvent(EditEvent.EditCategory(it)) },
-                onDeleteClicked = { viewModel.obtainEvent(EditEvent.RemoveCategory(it)) },
-                tierCategory = when (uiState.sheetState) {
-                    is SheetState.CategoryCreation -> uiState.sheetState.newCategory
-                    is SheetState.CategoryEditing -> uiState.sheetState.category
-                    else -> null
-                },
-                sheetState = sheetState,
-            )
+            when (uiState.sheetState) {
+                is SheetState.CategoryCreation -> CategoryModalBottomSheet(
+                    onDismissRequest = { viewModel.obtainEvent(EditEvent.HideSheet) },
+                    category = uiState.sheetState.newCategory,
+                    onSaveClicked = { viewModel.obtainEvent(EditEvent.EditCategory(it)) },
+                    onDeleteClicked = { viewModel.obtainEvent(EditEvent.RemoveCategory(it)) },
+                    sheetState = sheetState
+                )
+
+                is SheetState.CategoryEditing -> CategoryModalBottomSheet(
+                    onDismissRequest = { viewModel.obtainEvent(EditEvent.HideSheet) },
+                    category = uiState.sheetState.category,
+                    onSaveClicked = { viewModel.obtainEvent(EditEvent.EditCategory(it)) },
+                    onDeleteClicked = { viewModel.obtainEvent(EditEvent.RemoveCategory(it)) },
+                    sheetState = sheetState
+                )
+
+                is SheetState.SearchImages -> GoogleImageModalBottomSheet(
+                    onDismissRequest = { viewModel.obtainEvent(EditEvent.HideSheet) },
+                    searchQuery = uiState.sheetState.query,
+                    onQueryChanged = { viewModel.obtainEvent(EditEvent.SearchEdited(it)) },
+                    images = uiState.sheetState.images,
+                    sheetState = sheetState,
+                    onImageAdd = { index, bitmap ->
+                        viewModel.obtainEvent(
+                            EditEvent.SaveInternetImage(
+                                index, bitmap
+                            )
+                        )
+                    },
+                    onSearchClicked = { query -> viewModel.obtainEvent(EditEvent.SearchImages(query)) }
+                )
+
+                else -> {}
+            }
         }
         TierEditBody(
             modifier = Modifier.padding(innerPaddings),
@@ -194,7 +232,7 @@ fun TierEditScreen(
                 viewModel.obtainEvent(EditEvent.RemoveElement(elementId))
             },
             onElementUnpinDropped = { elementId ->
-                viewModel.obtainEvent(EditEvent.UnattachElementFromCategory(elementId))
+                viewModel.obtainEvent(EditEvent.UnpinElementFromCategory(elementId))
             },
             onReorderElements = { firstId, secondId ->
                 viewModel.obtainEvent(
@@ -285,11 +323,13 @@ fun NotAttachedImages(
             override fun onStarted(event: DragAndDropEvent) {
                 super.onStarted(event)
                 dragStarted = true
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
 
             override fun onEnded(event: DragAndDropEvent) {
                 super.onEnded(event)
                 dragStarted = false
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
         }
     }
@@ -379,6 +419,7 @@ fun CategoryItem(
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
     onReorderElements: (firstId: Long, secondId: Long) -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     var isReadyToDrop by remember { mutableStateOf(false) }
     val dndCallback = remember {
         object : DragAndDropTarget {
@@ -387,6 +428,11 @@ fun CategoryItem(
                 val elementIdToPin = draggedData.toLong()
                 onTierElementDropped(categoryWithElements.category.id, elementIdToPin)
                 return true
+            }
+
+            override fun onStarted(event: DragAndDropEvent) {
+                super.onStarted(event)
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
 
             override fun onEntered(event: DragAndDropEvent) {
@@ -402,6 +448,7 @@ fun CategoryItem(
             override fun onEnded(event: DragAndDropEvent) {
                 super.onEnded(event)
                 isReadyToDrop = false
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
         }
     }
@@ -409,10 +456,7 @@ fun CategoryItem(
     val categoryHeight = dimensionResource(id = R.dimen.image_category_size)
     val density = LocalDensity.current.density
     var cardHeight by remember { mutableIntStateOf(categoryHeight.value.toInt()) }
-    //TODO sort elements at data layer
-    /*val sortedElements = remember(categoryWithElements.elements) {
-            categoryWithElements.elements.sortedBy { it.position }
-        }*/
+
     val lazyGridState = rememberLazyGridState()
     val view = LocalView.current
     val reorderableLazyGridState =
@@ -447,7 +491,6 @@ fun CategoryItem(
                 category = categoryWithElements.category,
                 onClick = onCategoryClicked
             )
-            //TODO positioning elements by element.position
             LazyVerticalGrid(
                 modifier = Modifier
                     .heightIn(min = categoryHeight, max = 800.dp)
@@ -511,36 +554,6 @@ fun CategoryItem(
                     }
                 }
             }
-            /*FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onSizeChanged { cardHeight = (it.height / density).roundToInt() },
-                horizontalArrangement = Arrangement.spacedBy(itemArrangement),
-                verticalArrangement = Arrangement.spacedBy(itemArrangement)
-            ) {
-                categoryWithElements.elements.forEach { element ->
-                    key(element.elementId) {
-                        ElementImage(
-                            modifier = Modifier
-                                .size(categoryHeight)
-                                .dragAndDropSource {
-                                    detectTapGestures(
-                                        onLongPress = {
-                                            startTransfer(
-                                                DragAndDropTransferData(
-                                                    clipData = ClipData.newPlainText(
-                                                        "categoryElementId", element.elementId.toString()
-                                                    )
-                                                )
-                                            )
-                                        }
-                                    )
-                                },
-                            imageUrl = element.imageUrl,
-                        )
-                    }
-                }
-            }*/
         }
     }
 }
@@ -582,6 +595,7 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onAddClicked
             }
         }
     }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -641,27 +655,109 @@ private fun TierCategoryInfo(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GoogleImageModalBottomSheet(
+    modifier: Modifier = Modifier,
+    onDismissRequest: () -> Unit,
+    searchQuery: String,
+    onQueryChanged: (String) -> Unit,
+    images: List<String>,
+    onImageAdd: (index: Int, image: Bitmap) -> Unit,
+    sheetState: androidx.compose.material3.SheetState,
+    onSearchClicked: (String) -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val loader = ImageLoader(context)
+    val itemSpacing = dimensionResource(id = R.dimen.item_spacing)
+    val roundCornerSize = dimensionResource(id = R.dimen.round_clip)
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        sheetState = sheetState
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+        ) {
+            LocalOutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = searchQuery,
+                onValueChanged = onQueryChanged,
+                labelText = stringResource(R.string.search_images_label),
+                imeAction = ImeAction.Search,
+                onSearchClicked = onSearchClicked
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 80.dp),
+                horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+                verticalArrangement = Arrangement.spacedBy(itemSpacing)
+            ) {
+                itemsIndexed(items = images, key = { _, url -> url }) { index, url ->
+                    //var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+                    val request = ImageRequest.Builder(context = context)
+                        .data(url)
+                        .crossfade(true)
+                        .build()
+                    AsyncImage(
+                        model = request,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .widthIn(min = 80.dp, max = 150.dp)
+                            .heightIn(min = 80.dp, max = 150.dp)
+                            .clip(RoundedCornerShape(roundCornerSize))
+                            .clickable {
+                                scope.launch {
+                                    val result = (loader.execute(request) as SuccessResult).drawable
+                                    val bitmap = (result as BitmapDrawable).bitmap
+                                    onImageAdd(index, bitmap ?: return@launch)
+                                }
+                            },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LocalOutlinedTextField(
+    modifier: Modifier = Modifier,
+    value: String,
+    onValueChanged: (String) -> Unit,
+    error: Boolean = false,
+    labelText: String,
+    imeAction: ImeAction = ImeAction.Default,
+    onSearchClicked: (String) -> Unit = {}
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        value = value,
+        onValueChange = onValueChanged,
+        singleLine = true,
+        label = { Text(text = labelText) },
+        isError = error,
+        keyboardOptions = KeyboardOptions(imeAction = imeAction),
+        keyboardActions = KeyboardActions(
+            onSearch = { onSearchClicked(value) }
+        )
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryModalBottomSheet(
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
-    tierCategory: TierCategory?,
+    category: TierCategory,
     onSaveClicked: (TierCategory) -> Unit,
     onDeleteClicked: (TierCategory) -> Unit,
     sheetState: androidx.compose.material3.SheetState,
 ) {
-
-    val category by remember {
-        mutableStateOf(
-            tierCategory ?: TierCategory(
-                tierListId = 1,
-                position = 0
-            )
-        )
-    }
-
     var name by rememberSaveable { mutableStateOf(category.name) }
     val error by remember(name) { mutableStateOf(name.isBlank()) }
     var color by remember { mutableStateOf(category.color) }
@@ -677,12 +773,11 @@ fun CategoryModalBottomSheet(
             modifier = Modifier.padding(bottom = 10.dp)
         ) {
             //Category name
-            OutlinedTextField(
+            LocalOutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
-                singleLine = true,
-                label = { Text(text = "Tier name") },
-                isError = error
+                onValueChanged = { name = it },
+                labelText = stringResource(R.string.category_name_label),
+                error = error
             )
             //color picker
             ColorPicker(color = color, categoryName = name) { color = it }

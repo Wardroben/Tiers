@@ -1,6 +1,10 @@
 package ru.smalljinn.tiers.presentation.ui.screens.edit
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -24,17 +28,28 @@ import ru.smalljinn.tiers.data.database.model.unpin
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
+import ru.smalljinn.tiers.data.images.model.Image
 import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepository
+import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.presentation.navigation.EDIT_TIER_NAV_ARGUMENT
 import ru.smalljinn.tiers.util.EventHandler
 
 private const val TIER_LIST_UNTITLED_NAME = "Untitled"
 
+sealed class SheetAction {
+    data object Init : SheetAction()
+    data object Hide : SheetAction()
+    data class EditCategory(val category: TierCategory) : SheetAction()
+    data class CreateCategory(val newCategory: TierCategory) : SheetAction()
+    data object SearchImages : SheetAction()
+}
+
 sealed class SheetState {
     data object Hidden : SheetState()
     data class CategoryCreation(val newCategory: TierCategory) : SheetState()
     data class CategoryEditing(val category: TierCategory) : SheetState()
+    data class SearchImages(val query: String, val images: List<String>) : SheetState()
 }
 
 @Immutable
@@ -60,7 +75,8 @@ class TierEditViewModel(
     private val elementRepository: TierElementRepository,
     private val listRepository: TierListRepository,
     private val deleteElementsUseCase: DeleteElementsUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val networkImageRepository: NetworkImageRepository
 ) : ViewModel(), EventHandler<EditEvent> {
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
         ?: throw IllegalArgumentException("Bad navigation argument")
@@ -71,7 +87,25 @@ class TierEditViewModel(
     private val categoriesWithElementsStream =
         categoryRepository.getCategoriesWithElementsOfListStream(currentListId)
 
-    private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
+
+    private val sheetAction = MutableStateFlow<SheetAction>(SheetAction.Init)
+    //private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
+
+    private var searchQuery by mutableStateOf("")
+    private val imagesFromSearch = MutableStateFlow<List<String>>(emptyList())
+
+    private val sheetUiState = combine(
+        sheetAction,
+        snapshotFlow { searchQuery },
+        imagesFromSearch
+    ) { action, query, images ->
+        when (action) {
+            is SheetAction.EditCategory -> SheetState.CategoryEditing(action.category)
+            is SheetAction.CreateCategory -> SheetState.CategoryCreation(action.newCategory)
+            is SheetAction.SearchImages -> SheetState.SearchImages(query, images)
+            else -> SheetState.Hidden
+        }
+    }
 
     private val photoProcessing = devicePhotoRepository.imageProcessingStream
 
@@ -80,7 +114,7 @@ class TierEditViewModel(
             categoriesWithElementsStream,
             notAttachedElements,
             photoProcessing,
-            sheetState,
+            sheetUiState,
             tierListNameStream,
         ) { categoriesWithElements, elements, isPhotoProcessing, sheetState, listName ->
             EditUiState(
@@ -98,8 +132,8 @@ class TierEditViewModel(
 
     override fun obtainEvent(event: EditEvent) {
         when (event) {
-            EditEvent.CreateNewCategory -> sheetState.update {
-                SheetState.CategoryEditing(
+            EditEvent.CreateNewCategory -> sheetAction.update {
+                SheetAction.CreateCategory(
                     TierCategory.getCategoryToCreate(
                         tierId = currentListId,
                         position = uiState.value.lastCategoryIndex + 1
@@ -108,7 +142,7 @@ class TierEditViewModel(
             }
 
             is EditEvent.RemoveCategory -> {
-                sheetState.update { SheetState.Hidden }
+                sheetAction.update { SheetAction.Hide }
                 val tierCategoryWithElements =
                     uiState.value.categoriesWithElements.find { categoryWithElements ->
                         event.tierCategory == categoryWithElements.category
@@ -117,7 +151,7 @@ class TierEditViewModel(
                     elementRepository.insertTierElements(tierCategoryWithElements.elements.unpinElements())
                     categoryRepository.deleteCategory(event.tierCategory)
                 }
-                sheetState.update { SheetState.Hidden }
+                sheetAction.update { SheetAction.Hide }
             }
 
             is EditEvent.ChangeTierName -> {
@@ -128,7 +162,8 @@ class TierEditViewModel(
             }
 
             is EditEvent.EditCategory -> {
-                sheetState.update { SheetState.Hidden }
+                sheetAction.update { SheetAction.Hide }
+                //sheetState.update { SheetState.Hidden }
                 viewModelScope.launch {
                     categoryRepository.insertCategory(event.tierCategory)
                 }
@@ -141,7 +176,7 @@ class TierEditViewModel(
                 //elementRepository.deleteTierElement(event.tierElement)
             }
 
-            is EditEvent.UnattachElementFromCategory -> {
+            is EditEvent.UnpinElementFromCategory -> {
                 val elementInUnpinnedList =
                     uiState.value.notAttachedElements.find { element ->
                         element.elementId == event.elementId
@@ -184,10 +219,11 @@ class TierEditViewModel(
             }
 
             is EditEvent.SelectCategory -> {
-                sheetState.update { SheetState.CategoryEditing(event.tierCategory) }
+                sheetAction.update { SheetAction.EditCategory(event.tierCategory) }
+                //sheetState.update { SheetState.CategoryEditing(event.tierCategory) }
             }
 
-            is EditEvent.HideSheet -> sheetState.update { SheetState.Hidden }
+            is EditEvent.HideSheet -> sheetAction.update { SheetAction.Hide }
 
             is EditEvent.ReorderElements -> {
                 //TODO make use case
@@ -196,13 +232,42 @@ class TierEditViewModel(
                     val secondElement = elementRepository.getElementById(event.secondId)
 
                     val swappedElements = listOf(
-                        firstElement.copy(position = secondElement.position),
-                        secondElement.copy(position = firstElement.position)
+                        secondElement.copy(position = firstElement.position),
+                        firstElement.copy(position = secondElement.position)
                     )
-
                     elementRepository.insertTierElements(swappedElements)
                 }
+            }
 
+            is EditEvent.SearchEdited -> {
+                searchQuery = event.query
+            }
+
+            is EditEvent.SaveInternetImage -> viewModelScope.launch {
+                val uri = networkImageRepository.compressAndSaveImage(event.bitmap)
+                elementRepository.insertTierElement(
+                    TierElement(
+                        tierListId = currentListId,
+                        imageUrl = uri.toString()
+                    )
+                )
+            }.invokeOnCompletion {
+                val imageToRemove = imagesFromSearch.value.elementAt(event.index)
+                imagesFromSearch.update { it.minus(imageToRemove) }
+            }
+
+            is EditEvent.SearchImages -> {
+                if (event.query.isBlank() || event.query.length < 2) return
+                viewModelScope.launch {
+                    val images: List<Image> =
+                        networkImageRepository.getNetworkImagesList(event.query)
+                    imagesFromSearch.update { images.map { it.thumbnailLink } }
+                }
+            }
+
+            is EditEvent.OpenSearchSheet -> {
+                sheetAction.update { SheetAction.SearchImages }
+                //sheetState.update { SheetState.SearchImages("", emptyList()) }
             }
         }
     }
@@ -215,12 +280,14 @@ class TierEditViewModel(
                 val elementRepo = appContainer.tierElementRepository
                 val listRepo = appContainer.tierListRepository
                 val deleteElementsUseCase = appContainer.deleteElementsUseCase
+                val networkImageRepository = appContainer.networkImageRepository
                 TierEditViewModel(
                     categoryRepository = categoryRepo,
                     listRepository = listRepo,
                     elementRepository = elementRepo,
                     devicePhotoRepository = appContainer.devicePhotoRepository,
                     deleteElementsUseCase = deleteElementsUseCase,
+                    networkImageRepository = networkImageRepository,
                     savedStateHandle = createSavedStateHandle()
                 )
             }

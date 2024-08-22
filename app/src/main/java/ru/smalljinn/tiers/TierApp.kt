@@ -81,7 +81,7 @@ private class AppContainerImpl(
     override val tierListRepository: TierListRepository
         get() = TierListRepositoryImpl(tierListDao)
     override val networkImageRepository: NetworkImageRepository
-        get() = NetworkImageRepositoryImpl(googleSearchApi)
+        get() = NetworkImageRepositoryImpl(googleSearchApi, photoProcessor)
     override val createNewTierListUseCase: CreateNewTierListUseCase
         get() = CreateNewTierListUseCase(tierListRepository, tierCategoryRepository)
     override val deleteElementsUseCase: DeleteElementsUseCase

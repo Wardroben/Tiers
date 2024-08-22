@@ -18,4 +18,7 @@
     <string name="delete_dragged_image_cd">Delete dragged image</string>
     <string name="empty_lists_label">No tier lists created. It\'s time to creativity!</string>
     <string name="create_tier_list">Create tier list</string>
+    <string name="category_name_label">Category name</string>
+    <string name="search_images_label">Search images</string>
+    <string name="search_images_via_internet">Search images via Internet</string>
 </resources>

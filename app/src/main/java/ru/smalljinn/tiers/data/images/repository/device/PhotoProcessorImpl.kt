@@ -56,6 +56,13 @@ class PhotoProcessorImpl(
         return true
     }
 
+    override suspend fun compressAndSaveImageFromInternet(bitmap: Bitmap): Uri {
+        //val scaledImage = scaleImage(bitmap)
+        val compressedImageUri = saveCompressedImage(bitmap)
+        Log.i(TAG, "Image from internet successfully saved path: $compressedImageUri")
+        return compressedImageUri
+    }
+
     private fun readImage(uri: Uri): Bitmap {
         try {
             appContext.contentResolver.openInputStream(uri).use { inputStream ->
