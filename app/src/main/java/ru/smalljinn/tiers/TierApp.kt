@@ -38,8 +38,9 @@ class TierApp : Application() {
         val tierListDao = db.tierListDao()
         val tierCategoryDao = db.categoryDao()
         val tierElementDao = db.elementDao()
+        val json = Json { ignoreUnknownKeys = true }
         val retrofit = Retrofit.Builder()
-            .addConverterFactory(Json.asConverterFactory(JSON_FORMAT.toMediaType()))
+            .addConverterFactory(json.asConverterFactory(JSON_FORMAT.toMediaType()))
             .baseUrl(BASE_URL)
             .build()
         val googleSearchService = retrofit.create(GoogleSearchApi::class.java)

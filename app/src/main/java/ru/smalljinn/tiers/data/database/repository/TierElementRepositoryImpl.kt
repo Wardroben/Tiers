@@ -35,4 +35,8 @@ class TierElementRepositoryImpl(private val elementDao: ElementDao) : TierElemen
     override suspend fun getListElements(listId: Long): List<TierElement> {
         return elementDao.getTierListElements(listId)
     }
+
+    override suspend fun reorderElements(draggedElementId: Long, targetElementId: Long) {
+        return elementDao.reorderElements(draggedElementId, targetElementId)
+    }
 }

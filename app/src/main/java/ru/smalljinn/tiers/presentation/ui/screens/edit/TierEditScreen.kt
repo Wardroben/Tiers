@@ -36,15 +36,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -56,6 +57,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -86,6 +88,8 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -95,6 +99,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -108,6 +113,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
@@ -120,6 +126,7 @@ import sh.calvin.reorderable.rememberReorderableLazyGridState
 import kotlin.math.roundToInt
 
 private const val DND_ELEMENT_ID_LABEL = "elementId"
+private const val DELAY_BEFORE_KEYBOARD_SHOWN = 250L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -211,7 +218,8 @@ fun TierEditScreen(
                             )
                         )
                     },
-                    onSearchClicked = { query -> viewModel.obtainEvent(EditEvent.SearchImages(query)) }
+                    onSearchClicked = { query -> viewModel.obtainEvent(EditEvent.SearchImages(query)) },
+                    imagesLoading = uiState.sheetState.loading
                 )
 
                 else -> {}
@@ -655,12 +663,13 @@ private fun TierCategoryInfo(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GoogleImageModalBottomSheet(
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
     searchQuery: String,
+    imagesLoading: Boolean,
     onQueryChanged: (String) -> Unit,
     images: List<String>,
     onImageAdd: (index: Int, image: Bitmap) -> Unit,
@@ -670,8 +679,21 @@ fun GoogleImageModalBottomSheet(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val loader = ImageLoader(context)
+    val focus = remember { FocusRequester() }
+
+
     val itemSpacing = dimensionResource(id = R.dimen.item_spacing)
     val roundCornerSize = dimensionResource(id = R.dimen.round_clip)
+    val minImageSize = remember { 80.dp }
+    val maxImageSize = remember { 160.dp }
+    val spacing = remember { 20.dp }
+
+    LaunchedEffect(key1 = Unit) {
+        if (images.isNotEmpty()) return@LaunchedEffect
+        delay(DELAY_BEFORE_KEYBOARD_SHOWN)
+        focus.requestFocus()
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
@@ -679,26 +701,35 @@ fun GoogleImageModalBottomSheet(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(spacing),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = spacing)
         ) {
             LocalOutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .focusRequester(focus)
+                    .fillMaxWidth(),
                 value = searchQuery,
                 onValueChanged = onQueryChanged,
                 labelText = stringResource(R.string.search_images_label),
                 imeAction = ImeAction.Search,
-                onSearchClicked = onSearchClicked
+                onSearchClicked = { query -> onSearchClicked(query) }
             )
-            Spacer(modifier = Modifier.height(20.dp))
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 80.dp),
+            AnimatedVisibility(visible = images.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.here_will_be_images_from_google_search),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+            AnimatedVisibility(visible = imagesLoading) { if (imagesLoading) CircularProgressIndicator() }
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Adaptive(minSize = minImageSize),
                 horizontalArrangement = Arrangement.spacedBy(itemSpacing),
-                verticalArrangement = Arrangement.spacedBy(itemSpacing)
+                verticalItemSpacing = itemSpacing
+                //verticalArrangement = Arrangement.spacedBy(itemSpacing)
             ) {
                 itemsIndexed(items = images, key = { _, url -> url }) { index, url ->
-                    //var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
                     val request = ImageRequest.Builder(context = context)
                         .data(url)
                         .crossfade(true)
@@ -706,9 +737,13 @@ fun GoogleImageModalBottomSheet(
                     AsyncImage(
                         model = request,
                         contentDescription = null,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .widthIn(min = 80.dp, max = 150.dp)
-                            .heightIn(min = 80.dp, max = 150.dp)
+                            .animateItemPlacement()
+                            .sizeIn(
+                                minHeight = minImageSize,
+                                minWidth = minImageSize,
+                            )
                             .clip(RoundedCornerShape(roundCornerSize))
                             .clickable {
                                 scope.launch {
@@ -734,6 +769,7 @@ fun LocalOutlinedTextField(
     imeAction: ImeAction = ImeAction.Default,
     onSearchClicked: (String) -> Unit = {}
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     OutlinedTextField(
         modifier = modifier,
         value = value,
@@ -743,7 +779,10 @@ fun LocalOutlinedTextField(
         isError = error,
         keyboardOptions = KeyboardOptions(imeAction = imeAction),
         keyboardActions = KeyboardActions(
-            onSearch = { onSearchClicked(value) }
+            onSearch = {
+                keyboardController?.hide()
+                onSearchClicked(value)
+            }
         )
     )
 }

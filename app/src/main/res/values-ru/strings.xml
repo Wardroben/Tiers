@@ -22,4 +22,5 @@
     <string name="category_name_label">Название категории</string>
     <string name="search_images_label">Поиск фото</string>
     <string name="search_images_via_internet">Поиск фото в Интернете</string>
+    <string name="here_will_be_images_from_google_search">Здесь будут фото из поисковика Google</string>
 </resources>

@@ -49,7 +49,8 @@ sealed class SheetState {
     data object Hidden : SheetState()
     data class CategoryCreation(val newCategory: TierCategory) : SheetState()
     data class CategoryEditing(val category: TierCategory) : SheetState()
-    data class SearchImages(val query: String, val images: List<String>) : SheetState()
+    data class SearchImages(val query: String, val images: List<String>, val loading: Boolean) :
+        SheetState()
 }
 
 @Immutable
@@ -93,16 +94,18 @@ class TierEditViewModel(
 
     private var searchQuery by mutableStateOf("")
     private val imagesFromSearch = MutableStateFlow<List<String>>(emptyList())
+    private val imagesLoading = MutableStateFlow(false)
 
     private val sheetUiState = combine(
         sheetAction,
         snapshotFlow { searchQuery },
-        imagesFromSearch
-    ) { action, query, images ->
+        imagesFromSearch,
+        imagesLoading
+    ) { action, query, images, loading ->
         when (action) {
             is SheetAction.EditCategory -> SheetState.CategoryEditing(action.category)
             is SheetAction.CreateCategory -> SheetState.CategoryCreation(action.newCategory)
-            is SheetAction.SearchImages -> SheetState.SearchImages(query, images)
+            is SheetAction.SearchImages -> SheetState.SearchImages(query, images, loading)
             else -> SheetState.Hidden
         }
     }
@@ -227,7 +230,7 @@ class TierEditViewModel(
 
             is EditEvent.ReorderElements -> {
                 //TODO make use case
-                viewModelScope.launch {
+                /*viewModelScope.launch {
                     val firstElement = elementRepository.getElementById(event.firstId)
                     val secondElement = elementRepository.getElementById(event.secondId)
 
@@ -236,6 +239,12 @@ class TierEditViewModel(
                         firstElement.copy(position = secondElement.position)
                     )
                     elementRepository.insertTierElements(swappedElements)
+                }*/
+                viewModelScope.launch {
+                    elementRepository.reorderElements(
+                        draggedElementId = event.firstId,
+                        targetElementId = event.secondId
+                    )
                 }
             }
 
@@ -258,10 +267,13 @@ class TierEditViewModel(
 
             is EditEvent.SearchImages -> {
                 if (event.query.isBlank() || event.query.length < 2) return
+                imagesLoading.update { true }
                 viewModelScope.launch {
                     val images: List<Image> =
                         networkImageRepository.getNetworkImagesList(event.query)
                     imagesFromSearch.update { images.map { it.thumbnailLink } }
+                }.invokeOnCompletion {
+                    imagesLoading.update { false }
                 }
             }
 

@@ -21,4 +21,5 @@
     <string name="category_name_label">Category name</string>
     <string name="search_images_label">Search images</string>
     <string name="search_images_via_internet">Search images via Internet</string>
+    <string name="here_will_be_images_from_google_search">Here will be images from Google search</string>
 </resources>
