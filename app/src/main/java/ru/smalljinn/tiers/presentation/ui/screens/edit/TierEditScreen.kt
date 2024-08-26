@@ -113,6 +113,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.R
@@ -136,6 +137,7 @@ fun TierEditScreen(
 ) {
     val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    //val listUpdatedFlow = viewModel.listUpdatedChannel.collectAsStateWithLifecycle(initialValue = null)
     val mediaLauncher =
         rememberLauncherForActivityResult(contract = PickMultipleVisualMedia()) { uris ->
             if (uris.isNotEmpty()) {
@@ -425,7 +427,7 @@ fun CategoryItem(
     categoryWithElements: TierCategoryWithElements,
     onCategoryClicked: () -> Unit,
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
-    onReorderElements: (firstId: Long, secondId: Long) -> Unit
+    onReorderElements: (firstId: Long, secondId: Long) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     var isReadyToDrop by remember { mutableStateOf(false) }
@@ -467,14 +469,19 @@ fun CategoryItem(
 
     val lazyGridState = rememberLazyGridState()
     val view = LocalView.current
+    val listReorderChannel = remember { Channel<Unit>() }
     val reorderableLazyGridState =
         rememberReorderableLazyGridState(lazyGridState = lazyGridState) { from, to ->
-            Log.i("DRAG", "Something happening $from - $to")
-            onReorderElements(from.key as Long, to.key as Long)
+            listReorderChannel.tryReceive()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
             }
+            onReorderElements(from.key as Long, to.key as Long)
+            listReorderChannel.receive()
         }
+    LaunchedEffect(key1 = categoryWithElements.elements) {
+        listReorderChannel.trySend(Unit)
+    }
     Card(
         modifier = modifier
             .defaultMinSize(minHeight = categoryHeight)
