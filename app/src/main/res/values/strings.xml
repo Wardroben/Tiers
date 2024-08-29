@@ -29,4 +29,7 @@
     <string name="navigate_back_cd">Navigate back</string>
     <string name="go_to_settings_cd">Go to settings</string>
     <string name="tier_name_search_label">Tier name</string>
+    <string name="google_api_instruction_before_link">The search requires a Google API key and a search engine ID to work. Detailed instructions on how to create them can be found at the following link: </string>
+    <string name="google_api_instruction_after_link">"Briefly, you need to create a project, get the API key for it, and then create a search engine and get the CX key, and then enter it into the text fields above. If you leave the fields blank, the default key will be used, but it has a limit of 100 requests per day, so it may not work. "</string>
+    <string name="search_images_instruction_cd">Instructions on how to set up an image search</string>
 </resources>

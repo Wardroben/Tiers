@@ -304,8 +304,7 @@ fun TierEditBody(
             images = notAttachedElements,
             onAddImageClicked = onAddImageClicked,
             onDeleteItemDropped = onDeleteItemDropped,
-            onElementUnpinDropped = onElementUnpinDropped,
-            vibrationEnabled = vibrationEnabled
+            onElementUnpinDropped = onElementUnpinDropped
         )
     }
 }
@@ -317,8 +316,7 @@ fun NotAttachedImages(
     images: List<TierElement>,
     onAddImageClicked: () -> Unit,
     onDeleteItemDropped: (Long) -> Unit,
-    onElementUnpinDropped: (Long) -> Unit,
-    vibrationEnabled: Boolean
+    onElementUnpinDropped: (Long) -> Unit
 ) {
     val itemArrangement = dimensionResource(id = R.dimen.item_arrangement)
     val imageSize = dimensionResource(id = R.dimen.image_list_size)

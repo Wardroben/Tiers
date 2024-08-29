@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,11 +18,16 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,29 +67,54 @@ fun SettingsBody(
     vibrationEnabled: Boolean,
     onVibrationChanged: (Boolean) -> Unit
 ) {
+    val uriHandler = LocalUriHandler.current
+    val instructionBeforeLink = stringResource(id = R.string.google_api_instruction_before_link)
+    val instructionAfterLink = stringResource(id = R.string.google_api_instruction_after_link)
+    val linkStyle = MaterialTheme.colorScheme.primary
     Column(
         modifier = modifier.padding(horizontal = dimensionResource(id = R.dimen.horizontal_padding)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.vertical_arrangement))
     ) {
+        //Instruction
+        val instructionText = remember {
+            buildAnnotatedString {
+                append(instructionBeforeLink)
+                pushStringAnnotation(
+                    tag = "instruction",
+                    annotation = "https://developers.google.com/custom-search/v1/using_rest?hl=ru#making_a_request"
+                )
+                withStyle(style = SpanStyle(color = linkStyle)) {
+                    append(" instruction")
+                }
+                pop()
+                append("\n\n")
+                append(instructionAfterLink)
+            }
+        }
+        Icon(
+            painter = painterResource(id = R.drawable.baseline_info_outline_24),
+            contentDescription = stringResource(R.string.search_images_instruction_cd)
+        )
+        ClickableText(text = instructionText) { offset ->
+            instructionText.getStringAnnotations(tag = "instruction", start = offset, end = offset)
+                .firstOrNull()?.let { link ->
+                    uriHandler.openUri(link.item)
+                }
+        }
+
         //API KEY
         KeysTextField(
             key = apiKey,
             contentDescription = stringResource(R.string.google_api_key_cd),
             label = stringResource(R.string.google_api_key_cd)
-        ) { key ->
-            onApiKeyChanged(key)
-        }
+        ) { key -> onApiKeyChanged(key) }
         //CX
         KeysTextField(
             key = cxKey,
             contentDescription = stringResource(id = R.string.cx_key_cd),
             label = stringResource(id = R.string.cx_key_cd)
-        ) { cx ->
-            onCxKeyChanged(cx)
-        }
-        VibrationSetting(enabled = vibrationEnabled) { enabled ->
-            onVibrationChanged(enabled)
-        }
+        ) { cx -> onCxKeyChanged(cx) }
+        VibrationSetting(enabled = vibrationEnabled) { enabled -> onVibrationChanged(enabled) }
     }
 }
 
@@ -142,7 +173,7 @@ private fun SettingsTopBar(navigateBack: () -> Unit) {
     )
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun ScreenPreview() {
     SettingsBody(

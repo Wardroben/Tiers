@@ -30,4 +30,8 @@
     <string name="navigate_back_cd">Вернуться обратно</string>
     <string name="go_to_settings_cd">Перейти в настройки</string>
     <string name="tier_name_search_label">Название тира</string>
+    <string name="google_api_instruction">Для работы поиска требуется ключ Google API и идентификатор поисковой системы. Подробную инструкцию по их созданию можно изучить по следующей ссылке: https://developers.google.com/custom-search/v1/using_rest?hl=ru#making_a_request.  Коротко, нужно создать проект, получить к нему ключ API, а после создать поисковую систему и получить ключ CX, а после ввести в текстовые поля выше.</string>
+    <string name="google_api_instruction_before_link">Для работы поиска требуется ключ Google API и идентификатор поисковой системы. Подробную инструкцию по их созданию можно изучить по следующей ссылке:</string>
+    <string name="google_api_instruction_after_link">Коротко, нужно создать проект, получить к нему ключ API, а после создать поисковую систему и получить ключ CX, а после ввести в текстовые поля ниже. Если оставить поля пустыми, то будет использован ключ по умолчанию, но у него есть ограничение в 100 запросов в день, так что он может не работать.</string>
+    <string name="search_images_instruction_cd">Инструкция настройки поиска изображений</string>
 </resources>
