@@ -12,10 +12,10 @@ class CreateNewTierListUseCase(
     private val tierListRepository: TierListRepository,
     private val tierCategoryRepository: TierCategoryRepository,
 ) {
-    suspend operator fun invoke(): Long {
+    suspend operator fun invoke(name: String): Long {
         return coroutineScope {
             //TODO adding list of categories to prevent recompositions
-            val tierListId = tierListRepository.insertTierList(TierList(name = "Untitled"))
+            val tierListId = tierListRepository.insertTierList(TierList(name = name))
             val categoriesToAdd = mutableListOf<TierCategory>()
             categoriesToAdd.add(
                 TierCategory(

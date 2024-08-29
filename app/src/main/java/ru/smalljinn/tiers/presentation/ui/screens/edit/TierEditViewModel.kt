@@ -31,6 +31,8 @@ import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.images.model.Image
 import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
+import ru.smalljinn.tiers.data.preferences.model.UserSettings
+import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.presentation.navigation.EDIT_TIER_NAV_ARGUMENT
 import ru.smalljinn.tiers.util.EventHandler
@@ -77,7 +79,8 @@ class TierEditViewModel(
     private val listRepository: TierListRepository,
     private val deleteElementsUseCase: DeleteElementsUseCase,
     private val savedStateHandle: SavedStateHandle,
-    private val networkImageRepository: NetworkImageRepository
+    private val networkImageRepository: NetworkImageRepository,
+    private val preferencesRepository: PreferencesRepository
 ) : ViewModel(), EventHandler<EditEvent> {
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
         ?: throw IllegalArgumentException("Bad navigation argument")
@@ -88,13 +91,19 @@ class TierEditViewModel(
     private val categoriesWithElementsStream =
         categoryRepository.getCategoriesWithElementsOfListStream(currentListId)
 
-
     private val sheetAction = MutableStateFlow<SheetAction>(SheetAction.Init)
     //private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
 
     private var searchQuery by mutableStateOf("")
     private val imagesFromSearch = MutableStateFlow<List<String>>(emptyList())
     private val imagesLoading = MutableStateFlow(false)
+
+    val settingsStream = preferencesRepository.getSettingsStream()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000L),
+            initialValue = UserSettings()
+        )
 
     private val sheetUiState = combine(
         sheetAction,
@@ -300,6 +309,7 @@ class TierEditViewModel(
                     devicePhotoRepository = appContainer.devicePhotoRepository,
                     deleteElementsUseCase = deleteElementsUseCase,
                     networkImageRepository = networkImageRepository,
+                    preferencesRepository = appContainer.preferencesRepository,
                     savedStateHandle = createSavedStateHandle()
                 )
             }

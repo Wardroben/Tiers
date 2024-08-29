@@ -63,8 +63,7 @@ class TiersListViewModel(
             }
 
             is TiersEvent.CreateNew -> viewModelScope.launch {
-                createNewTierListUseCase()
-                //tierListRepository.insertTierList(TierList(name = event.name))
+                createNewTierListUseCase(event.name)
             }
 
             is TiersEvent.Search -> searchQuery = event.query

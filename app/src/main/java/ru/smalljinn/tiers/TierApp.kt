@@ -1,6 +1,7 @@
 package ru.smalljinn.tiers
 
 import android.app.Application
+import android.content.Context
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
@@ -24,6 +25,8 @@ import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryI
 import ru.smalljinn.tiers.data.images.source.BASE_URL
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
 import ru.smalljinn.tiers.data.images.source.JSON_FORMAT
+import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
+import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepositoryImpl
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
@@ -50,7 +53,8 @@ class TierApp : Application() {
             tierCategoryDao = tierCategoryDao,
             tierElementDao = tierElementDao,
             googleSearchApi = googleSearchService,
-            photoProcessor = photoProcessor
+            photoProcessor = photoProcessor,
+            appContext = applicationContext
         )
     }
 }
@@ -64,6 +68,7 @@ interface AppContainer {
     val createNewTierListUseCase: CreateNewTierListUseCase
     val deleteElementsUseCase: DeleteElementsUseCase
     val deleteTierListUseCase: DeleteTierListUseCase
+    val preferencesRepository: PreferencesRepository
 }
 
 private class AppContainerImpl(
@@ -71,7 +76,8 @@ private class AppContainerImpl(
     private val tierListDao: TierListDao,
     private val tierCategoryDao: CategoryDao,
     private val tierElementDao: ElementDao,
-    private val googleSearchApi: GoogleSearchApi
+    private val googleSearchApi: GoogleSearchApi,
+    private val appContext: Context
 ) : AppContainer {
     override val devicePhotoRepository: DevicePhotoRepository
         get() = DevicePhotoRepositoryImpl(photoProcessor)
@@ -93,4 +99,6 @@ private class AppContainerImpl(
             deleteElementsUseCase,
             tierListRepository
         )
+    override val preferencesRepository: PreferencesRepository
+        get() = PreferencesRepositoryImpl(appContext = appContext)
 }

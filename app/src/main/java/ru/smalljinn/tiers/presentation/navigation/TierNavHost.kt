@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ru.smalljinn.tiers.presentation.ui.screens.edit.TierEditScreen
+import ru.smalljinn.tiers.presentation.ui.screens.settings.SettingsScreen
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersListScreen
 
 @Composable
@@ -41,7 +42,8 @@ fun TierNavHost(
             TiersListScreen(
                 navigateToEdit = { tierId ->
                     navHostController.navigate(NavigationDestination.Edit.createRoute(tierId))
-                }
+                },
+                navigateToSettings = { navHostController.navigate(NavigationDestination.Settings.route) }
             )
         }
         composable(
@@ -49,6 +51,10 @@ fun TierNavHost(
             arguments = listOf(navArgument(EDIT_TIER_NAV_ARGUMENT) { type = NavType.LongType })
         ) {
             TierEditScreen()
+        }
+
+        composable(route = NavigationDestination.Settings.route) {
+            SettingsScreen(navigateBack = { navHostController.navigateUp() })
         }
     }
 }

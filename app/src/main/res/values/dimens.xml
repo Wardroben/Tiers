@@ -8,4 +8,6 @@
     <dimen name="min_category_height">64dp</dimen>
     <dimen name="border_width">1dp</dimen>
     <dimen name="textfield_padding">15dp</dimen>
+    <dimen name="horizontal_padding">20dp</dimen>
+    <dimen name="vertical_arrangement">10dp</dimen>
 </resources>

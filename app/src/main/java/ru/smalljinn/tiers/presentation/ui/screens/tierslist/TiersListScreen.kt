@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
@@ -82,7 +83,8 @@ import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
 fun TiersListScreen(
     modifier: Modifier = Modifier,
     viewModel: TiersListViewModel = viewModel(factory = TiersListViewModel.Factory),
-    navigateToEdit: (Long) -> Unit
+    navigateToEdit: (Long) -> Unit,
+    navigateToSettings: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -103,7 +105,16 @@ fun TiersListScreen(
         topBar = {
             TopAppBar(
                 modifier = Modifier.clickable { scrollToTop() },
-                title = { Text(text = stringResource(id = R.string.app_name)) })
+                title = { Text(text = stringResource(id = R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = navigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.go_to_settings_cd)
+                        )
+                    }
+                }
+            )
         },
         floatingActionButton = {
             AnimatedVisibility(visible = showAddButton, exit = scaleOut(), enter = scaleIn()) {
@@ -256,7 +267,7 @@ fun SearchElement(
                 contentDescription = stringResource(R.string.search_tier_list_by_name_cd)
             )
         },
-        label = { Text(text = "Tier name") },
+        label = { Text(text = stringResource(R.string.tier_name_search_label)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         trailingIcon = {

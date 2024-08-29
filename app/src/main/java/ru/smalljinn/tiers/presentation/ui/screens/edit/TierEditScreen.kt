@@ -137,15 +137,15 @@ fun TierEditScreen(
 ) {
     val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
-    //val listUpdatedFlow = viewModel.listUpdatedChannel.collectAsStateWithLifecycle(initialValue = null)
+    val settings = viewModel.settingsStream.collectAsStateWithLifecycle().value
+    val focusManager = LocalFocusManager.current
+    val isKeyboardOpened = keyboardAsState()
     val mediaLauncher =
         rememberLauncherForActivityResult(contract = PickMultipleVisualMedia()) { uris ->
             if (uris.isNotEmpty()) {
                 viewModel.obtainEvent(EditEvent.AddImages(uris))
             }
         }
-    val focusManager = LocalFocusManager.current
-    val isKeyboardOpened = keyboardAsState()
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -251,7 +251,8 @@ fun TierEditScreen(
                         secondId = secondId
                     )
                 )
-            }
+            },
+            vibrationEnabled = settings.vibrationEnabled
         )
     }
 }
@@ -287,7 +288,8 @@ fun TierEditBody(
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
     onDeleteItemDropped: (Long) -> Unit,
     onElementUnpinDropped: (Long) -> Unit,
-    onReorderElements: (firstId: Long, secondId: Long) -> Unit
+    onReorderElements: (firstId: Long, secondId: Long) -> Unit,
+    vibrationEnabled: Boolean
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         CategoriesList(
@@ -295,13 +297,15 @@ fun TierEditBody(
             categories = categories,
             onCategoryClicked = onCategoryClicked,
             onTierElementDropped = onTierElementDropped,
-            onReorderElements = onReorderElements
+            onReorderElements = onReorderElements,
+            vibrationEnabled = vibrationEnabled
         )
         NotAttachedImages(
             images = notAttachedElements,
             onAddImageClicked = onAddImageClicked,
             onDeleteItemDropped = onDeleteItemDropped,
-            onElementUnpinDropped = onElementUnpinDropped
+            onElementUnpinDropped = onElementUnpinDropped,
+            vibrationEnabled = vibrationEnabled
         )
     }
 }
@@ -313,11 +317,11 @@ fun NotAttachedImages(
     images: List<TierElement>,
     onAddImageClicked: () -> Unit,
     onDeleteItemDropped: (Long) -> Unit,
-    onElementUnpinDropped: (Long) -> Unit
+    onElementUnpinDropped: (Long) -> Unit,
+    vibrationEnabled: Boolean
 ) {
     val itemArrangement = dimensionResource(id = R.dimen.item_arrangement)
     val imageSize = dimensionResource(id = R.dimen.image_list_size)
-    val haptic = LocalHapticFeedback.current
 
     var dragStarted by remember { mutableStateOf(false) }
     val dndCallback = remember {
@@ -333,13 +337,11 @@ fun NotAttachedImages(
             override fun onStarted(event: DragAndDropEvent) {
                 super.onStarted(event)
                 dragStarted = true
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
 
             override fun onEnded(event: DragAndDropEvent) {
                 super.onEnded(event)
                 dragStarted = false
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
         }
     }
@@ -376,7 +378,6 @@ fun NotAttachedImages(
                     .dragAndDropSource {
                         detectTapGestures(
                             onLongPress = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 startTransfer(
                                     DragAndDropTransferData(
                                         ClipData.newPlainText(
@@ -400,7 +401,8 @@ fun CategoriesList(
     categories: List<TierCategoryWithElements>,
     onCategoryClicked: (TierCategory) -> Unit,
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
-    onReorderElements: (firstId: Long, secondId: Long) -> Unit
+    onReorderElements: (firstId: Long, secondId: Long) -> Unit,
+    vibrationEnabled: Boolean
 ) {
     val itemArrangement = dimensionResource(id = R.dimen.item_arrangement)
     LazyColumn(
@@ -414,7 +416,8 @@ fun CategoriesList(
                 categoryWithElements = categoryWithElements,
                 onCategoryClicked = { onCategoryClicked(categoryWithElements.category) },
                 onTierElementDropped = onTierElementDropped,
-                onReorderElements = onReorderElements
+                onReorderElements = onReorderElements,
+                vibrationEnabled = vibrationEnabled
             )
         }
     }
@@ -428,9 +431,12 @@ fun CategoryItem(
     onCategoryClicked: () -> Unit,
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
     onReorderElements: (firstId: Long, secondId: Long) -> Unit,
+    vibrationEnabled: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
     var isReadyToDrop by remember { mutableStateOf(false) }
+    val vibrate = { haptic.performHapticFeedback(HapticFeedbackType.LongPress) }
+
     val dndCallback = remember {
         object : DragAndDropTarget {
             override fun onDrop(event: DragAndDropEvent): Boolean {
@@ -442,7 +448,9 @@ fun CategoryItem(
 
             override fun onStarted(event: DragAndDropEvent) {
                 super.onStarted(event)
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                if (vibrationEnabled) {
+                    vibrate()
+                }
             }
 
             override fun onEntered(event: DragAndDropEvent) {
@@ -458,7 +466,9 @@ fun CategoryItem(
             override fun onEnded(event: DragAndDropEvent) {
                 super.onEnded(event)
                 isReadyToDrop = false
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                if (vibrationEnabled) {
+                    vibrate()
+                }
             }
         }
     }
@@ -474,7 +484,9 @@ fun CategoryItem(
         rememberReorderableLazyGridState(lazyGridState = lazyGridState) { from, to ->
             listReorderChannel.tryReceive()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
+                if (vibrationEnabled) {
+                    view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
+                }
             }
             onReorderElements(from.key as Long, to.key as Long)
             listReorderChannel.receive()
@@ -553,13 +565,17 @@ fun CategoryItem(
                                 .draggableHandle(
                                     onDragStarted = {
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                            view.performHapticFeedback(HapticFeedbackConstants.DRAG_START)
+                                            if (vibrationEnabled) view.performHapticFeedback(
+                                                HapticFeedbackConstants.DRAG_START
+                                            )
                                         }
                                         Log.i("DRAG", "drag started $element")
                                     },
                                     onDragStopped = {
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                            view.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
+                                            if (vibrationEnabled) view.performHapticFeedback(
+                                                HapticFeedbackConstants.GESTURE_END
+                                            )
                                         }
                                         Log.i("DRAG", "drag stopped $element")
                                     },

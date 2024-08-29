@@ -12,3 +12,5 @@ plugins {
     alias(libs.plugins.kapt) apply false
     alias(libs.plugins.hilt) apply false
 }
+val debugVersionNameSuffix by extra("debug")
+val releaseVersionNameSuffix by extra("release")

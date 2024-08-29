@@ -22,4 +22,11 @@
     <string name="search_images_label">Search images</string>
     <string name="search_images_via_internet">Search images via Internet</string>
     <string name="here_will_be_images_from_google_search">Here will be images from Google search</string>
+    <string name="google_api_key_cd">Google API key</string>
+    <string name="cx_key_cd">CX key</string>
+    <string name="vibration">Vibration</string>
+    <string name="settings">Settings</string>
+    <string name="navigate_back_cd">Navigate back</string>
+    <string name="go_to_settings_cd">Go to settings</string>
+    <string name="tier_name_search_label">Tier name</string>
 </resources>

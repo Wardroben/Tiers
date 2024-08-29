@@ -23,4 +23,11 @@
     <string name="search_images_label">Поиск фото</string>
     <string name="search_images_via_internet">Поиск фото в Интернете</string>
     <string name="here_will_be_images_from_google_search">Здесь будут фото из поисковика Google</string>
+    <string name="google_api_key_cd">Google API ключ</string>
+    <string name="cx_key_cd">CX ключ</string>
+    <string name="vibration">Вибрация</string>
+    <string name="settings">Настройки</string>
+    <string name="navigate_back_cd">Вернуться обратно</string>
+    <string name="go_to_settings_cd">Перейти в настройки</string>
+    <string name="tier_name_search_label">Название тира</string>
 </resources>

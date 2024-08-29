@@ -17,7 +17,7 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -34,6 +34,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            versionNameSuffix = rootProject.extra["releaseVersionNameSuffix"] as String
+        }
+        getByName("debug") {
+            versionNameSuffix = rootProject.extra["debugVersionNameSuffix"] as String
         }
     }
     compileOptions {
@@ -70,6 +74,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     //annotationProcessor(libs.androidx.room.compiler)
+
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.retrofit2)
     implementation(libs.retrofit2.converter)

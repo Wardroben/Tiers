@@ -51,7 +51,7 @@ class EntitiesCascadeDeletionTest {
     fun createNewTierListUseCase_TierListDelete_AllCategoriesAndElementsDeletedWithList() =
         runTest {
             //create empty list with base categories
-            val tierListId = createNewTierListUseCase()
+            val tierListId = createNewTierListUseCase("Aboba")
             repeat(3) {
                 elementRepository.insertTierElement(
                     TierUtils.createTierElement(tierListId = tierListId)

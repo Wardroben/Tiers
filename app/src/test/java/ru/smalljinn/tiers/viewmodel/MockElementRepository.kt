@@ -32,4 +32,8 @@ class MockElementRepository : TierElementRepository {
     override suspend fun getListElements(listId: Long): List<TierElement> {
         TODO("Not yet implemented")
     }
+
+    override suspend fun reorderElements(draggedElementId: Long, targetElementId: Long) {
+        TODO("Not yet implemented")
+    }
 }
