@@ -70,6 +70,7 @@ fun SettingsBody(
     val uriHandler = LocalUriHandler.current
     val instructionBeforeLink = stringResource(id = R.string.google_api_instruction_before_link)
     val instructionAfterLink = stringResource(id = R.string.google_api_instruction_after_link)
+    val linkText = stringResource(id = R.string.google_api_instruction_link)
     val linkStyle = MaterialTheme.colorScheme.primary
     Column(
         modifier = modifier.padding(horizontal = dimensionResource(id = R.dimen.horizontal_padding)),
@@ -84,7 +85,7 @@ fun SettingsBody(
                     annotation = "https://developers.google.com/custom-search/v1/using_rest?hl=ru#making_a_request"
                 )
                 withStyle(style = SpanStyle(color = linkStyle)) {
-                    append(" instruction")
+                    append(linkText)
                 }
                 pop()
                 append("\n\n")
