@@ -18,9 +18,18 @@ import ru.smalljinn.tiers.TierApp
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.util.EventHandler
 
+const val CX_REGEX = "^[A-Z0-9]+$"
+const val API_REGEX = "^[A-Z0-9-+/|]+$"
+
 data class SettingsUiState(
     val apiKey: String = "",
     val cx: String = "",
+    val apiError: Boolean = apiKey.isBlank()
+            || apiKey.length != 39
+            || !apiKey.contains(API_REGEX.toRegex(RegexOption.IGNORE_CASE)),
+    val cxError: Boolean = cx.isBlank()
+            || cx.length != 17
+            || !cx.contains(CX_REGEX.toRegex(RegexOption.IGNORE_CASE)),
     val vibrationEnabled: Boolean = true
 )
 

@@ -1,10 +1,6 @@
 package ru.smalljinn.tiers.presentation.ui.screens.edit
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -28,7 +24,6 @@ import ru.smalljinn.tiers.data.database.model.unpin
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
-import ru.smalljinn.tiers.data.images.model.Image
 import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.preferences.model.UserSettings
@@ -36,6 +31,7 @@ import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.presentation.navigation.EDIT_TIER_NAV_ARGUMENT
 import ru.smalljinn.tiers.util.EventHandler
+import ru.smalljinn.tiers.util.Result
 
 private const val TIER_LIST_UNTITLED_NAME = "Untitled"
 
@@ -47,11 +43,17 @@ sealed class SheetAction {
     data object SearchImages : SheetAction()
 }
 
+
 sealed class SheetState {
     data object Hidden : SheetState()
     data class CategoryCreation(val newCategory: TierCategory) : SheetState()
     data class CategoryEditing(val category: TierCategory) : SheetState()
-    data class SearchImages(val query: String, val images: List<String>, val loading: Boolean) :
+    data class SearchImages(
+        val query: String,
+        val images: List<String>,
+        val loading: Boolean,
+        val errorMessage: String? = null
+    ) :
         SheetState()
 }
 
@@ -65,6 +67,15 @@ data class EditUiState(
 ) {
     val lastCategoryIndex = categoriesWithElements.lastIndex
 }
+
+@Immutable
+data class ImageSearchState(
+    val searchQuery: String = "",
+    val images: List<String> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)
+
 
 /**
  * Set categoryId to null for all elements to unpin them
@@ -94,9 +105,11 @@ class TierEditViewModel(
     private val sheetAction = MutableStateFlow<SheetAction>(SheetAction.Init)
     //private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
 
-    private var searchQuery by mutableStateOf("")
+    /*private var searchQuery by mutableStateOf("")
     private val imagesFromSearch = MutableStateFlow<List<String>>(emptyList())
-    private val imagesLoading = MutableStateFlow(false)
+    private val imagesLoading = MutableStateFlow(false)*/
+
+    private val searchStateStream = MutableStateFlow(ImageSearchState())
 
     val settingsStream = preferencesRepository.getSettingsStream()
         .stateIn(
@@ -107,14 +120,23 @@ class TierEditViewModel(
 
     private val sheetUiState = combine(
         sheetAction,
-        snapshotFlow { searchQuery },
+        /*snapshotFlow { searchQuery },
         imagesFromSearch,
-        imagesLoading
-    ) { action, query, images, loading ->
+        imagesLoading*/
+        searchStateStream
+    ) { action, state
+        //query, images, loading
+        ->
         when (action) {
             is SheetAction.EditCategory -> SheetState.CategoryEditing(action.category)
             is SheetAction.CreateCategory -> SheetState.CategoryCreation(action.newCategory)
-            is SheetAction.SearchImages -> SheetState.SearchImages(query, images, loading)
+            is SheetAction.SearchImages -> SheetState.SearchImages(
+                query = state.searchQuery,
+                images = state.images,
+                loading = state.isLoading,
+                errorMessage = state.errorMessage
+            )
+
             else -> SheetState.Hidden
         }
     }
@@ -258,31 +280,56 @@ class TierEditViewModel(
             }
 
             is EditEvent.SearchEdited -> {
-                searchQuery = event.query
+                searchStateStream.update { it.copy(searchQuery = event.query) }
+                //searchQuery = event.query
             }
 
             is EditEvent.SaveInternetImage -> viewModelScope.launch {
-                val uri = networkImageRepository.compressAndSaveImage(event.bitmap)
-                elementRepository.insertTierElement(
-                    TierElement(
-                        tierListId = currentListId,
-                        imageUrl = uri.toString()
-                    )
-                )
-            }.invokeOnCompletion {
-                val imageToRemove = imagesFromSearch.value.elementAt(event.index)
-                imagesFromSearch.update { it.minus(imageToRemove) }
+                val resultStream = networkImageRepository.compressAndSaveImage(event.bitmap)
+                resultStream.collect { result ->
+                    when (result) {
+                        is Result.Error -> searchStateStream.update { it.copy(errorMessage = result.message) }
+                        is Result.Loading -> searchStateStream.update { it.copy(isLoading = result.isLoading) }//imagesLoading.update { result.isLoading }
+                        is Result.Success -> {
+                            searchStateStream.update { it.copy(errorMessage = null) }
+                            elementRepository.insertTierElement(
+                                TierElement(
+                                    tierListId = currentListId,
+                                    imageUrl = result.data.toString()
+                                )
+                            )
+                            val imageToRemove =
+                                searchStateStream.value.images.elementAt(event.index)
+                            searchStateStream.update { state ->
+                                state.copy(
+                                    images = state.images.minus(
+                                        imageToRemove
+                                    )
+                                )
+                            }
+                            //imagesFromSearch.update { it.minus(imageToRemove) }
+                        }
+                    }
+                }
             }
 
             is EditEvent.SearchImages -> {
                 if (event.query.isBlank() || event.query.length < 2) return
-                imagesLoading.update { true }
                 viewModelScope.launch {
-                    val images: List<Image> =
-                        networkImageRepository.getNetworkImagesList(event.query)
-                    imagesFromSearch.update { images.map { it.thumbnailLink } }
-                }.invokeOnCompletion {
-                    imagesLoading.update { false }
+                    val imagesStream = networkImageRepository.getNetworkImagesList(event.query)
+                    imagesStream.collect { result ->
+                        when (result) {
+                            is Result.Error -> searchStateStream.update { it.copy(errorMessage = result.message) }
+                            is Result.Loading -> searchStateStream.update { it.copy(isLoading = result.isLoading) }//imagesLoading.update { result.isLoading }
+                            is Result.Success -> searchStateStream.update { state ->
+                                state.copy(images = result.data?.map { it.thumbnailLink }
+                                    ?: emptyList(), errorMessage = null)
+                            }
+                            /*imagesFromSearch.update {
+                            result.data?.map { it.thumbnailLink } ?: emptyList()
+                        }*/
+                        }
+                    }
                 }
             }
 

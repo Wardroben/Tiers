@@ -221,7 +221,8 @@ fun TierEditScreen(
                         )
                     },
                     onSearchClicked = { query -> viewModel.obtainEvent(EditEvent.SearchImages(query)) },
-                    imagesLoading = uiState.sheetState.loading
+                    imagesLoading = uiState.sheetState.loading,
+                    errorMessage = uiState.sheetState.errorMessage
                 )
 
                 else -> {}
@@ -693,6 +694,7 @@ fun GoogleImageModalBottomSheet(
     imagesLoading: Boolean,
     onQueryChanged: (String) -> Unit,
     images: List<String>,
+    errorMessage: String?,
     onImageAdd: (index: Int, image: Bitmap) -> Unit,
     sheetState: androidx.compose.material3.SheetState,
     onSearchClicked: (String) -> Unit
@@ -741,6 +743,12 @@ fun GoogleImageModalBottomSheet(
                 Text(
                     text = stringResource(R.string.here_will_be_images_from_google_search),
                     style = MaterialTheme.typography.bodyLarge
+                )
+            }
+            AnimatedVisibility(visible = !errorMessage.isNullOrEmpty()) {
+                Text(
+                    text = errorMessage ?: "no errors",
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
             AnimatedVisibility(visible = imagesLoading) { if (imagesLoading) CircularProgressIndicator() }

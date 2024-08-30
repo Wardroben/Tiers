@@ -28,6 +28,8 @@ import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryI
 import ru.smalljinn.tiers.data.images.source.BASE_URL
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
 import ru.smalljinn.tiers.data.images.source.JSON_FORMAT
+import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
+import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepositoryImpl
 import javax.inject.Singleton
 
 @Module
@@ -72,9 +74,19 @@ object AppModule {
         retrofit.create(GoogleSearchApi::class.java)
 
     @Provides
+    @Singleton
+    fun providePreferencesRepository(@ApplicationContext context: Context): PreferencesRepository =
+        PreferencesRepositoryImpl(context)
+
+    @Provides
     fun provideSearchRepository(
         googleSearchService: GoogleSearchApi,
-        photoProcessor: PhotoProcessor
+        photoProcessor: PhotoProcessor,
+        preferencesRepository: PreferencesRepository
     ): NetworkImageRepository =
-        NetworkImageRepositoryImpl(googleSearchService, photoProcessor)
+        NetworkImageRepositoryImpl(
+            googleSearchApi = googleSearchService,
+            photoProcessor = photoProcessor,
+            preferencesRepository = preferencesRepository
+        )
 }

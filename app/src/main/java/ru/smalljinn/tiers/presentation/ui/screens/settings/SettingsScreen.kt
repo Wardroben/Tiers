@@ -48,11 +48,13 @@ fun SettingsScreen(
         SettingsBody(
             modifier = Modifier.padding(innerPadding),
             apiKey = uiState.apiKey,
+            isApiError = uiState.apiError,
             cxKey = uiState.cx,
+            isCxError = uiState.cxError,
             vibrationEnabled = uiState.vibrationEnabled,
             onVibrationChanged = { viewModel.obtainEvent(SettingsEvent.ChangeVibration(it)) },
             onApiKeyChanged = { viewModel.obtainEvent(SettingsEvent.ChangeApiKey(it)) },
-            onCxKeyChanged = { viewModel.obtainEvent(SettingsEvent.ChangeCX(it)) }
+            onCxKeyChanged = { viewModel.obtainEvent(SettingsEvent.ChangeCX(it)) },
         )
     }
 }
@@ -62,6 +64,8 @@ fun SettingsBody(
     modifier: Modifier = Modifier,
     apiKey: String,
     cxKey: String,
+    isApiError: Boolean,
+    isCxError: Boolean,
     onApiKeyChanged: (String) -> Unit,
     onCxKeyChanged: (String) -> Unit,
     vibrationEnabled: Boolean,
@@ -72,31 +76,34 @@ fun SettingsBody(
     val instructionAfterLink = stringResource(id = R.string.google_api_instruction_after_link)
     val linkText = stringResource(id = R.string.google_api_instruction_link)
     val linkStyle = MaterialTheme.colorScheme.primary
+    val instructionText = remember {
+        buildAnnotatedString {
+            append(instructionBeforeLink)
+            pushStringAnnotation(
+                tag = "instruction",
+                annotation = "https://developers.google.com/custom-search/v1/using_rest?hl=ru#making_a_request"
+            )
+            withStyle(style = SpanStyle(color = linkStyle)) {
+                append(linkText)
+            }
+            pop()
+            append("\n\n")
+            append(instructionAfterLink)
+        }
+    }
     Column(
         modifier = modifier.padding(horizontal = dimensionResource(id = R.dimen.horizontal_padding)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.vertical_arrangement))
     ) {
         //Instruction
-        val instructionText = remember {
-            buildAnnotatedString {
-                append(instructionBeforeLink)
-                pushStringAnnotation(
-                    tag = "instruction",
-                    annotation = "https://developers.google.com/custom-search/v1/using_rest?hl=ru#making_a_request"
-                )
-                withStyle(style = SpanStyle(color = linkStyle)) {
-                    append(linkText)
-                }
-                pop()
-                append("\n\n")
-                append(instructionAfterLink)
-            }
-        }
         Icon(
             painter = painterResource(id = R.drawable.baseline_info_outline_24),
             contentDescription = stringResource(R.string.search_images_instruction_cd)
         )
-        ClickableText(text = instructionText) { offset ->
+        ClickableText(
+            text = instructionText,
+            style = MaterialTheme.typography.bodyMedium
+        ) { offset ->
             instructionText.getStringAnnotations(tag = "instruction", start = offset, end = offset)
                 .firstOrNull()?.let { link ->
                     uriHandler.openUri(link.item)
@@ -107,13 +114,15 @@ fun SettingsBody(
         KeysTextField(
             key = apiKey,
             contentDescription = stringResource(R.string.google_api_key_cd),
-            label = stringResource(R.string.google_api_key_cd)
+            label = stringResource(R.string.google_api_key_cd),
+            isError = isApiError
         ) { key -> onApiKeyChanged(key) }
         //CX
         KeysTextField(
             key = cxKey,
             contentDescription = stringResource(id = R.string.cx_key_cd),
-            label = stringResource(id = R.string.cx_key_cd)
+            label = stringResource(id = R.string.cx_key_cd),
+            isError = isCxError
         ) { cx -> onCxKeyChanged(cx) }
         VibrationSetting(enabled = vibrationEnabled) { enabled -> onVibrationChanged(enabled) }
     }
@@ -141,6 +150,7 @@ private fun KeysTextField(
     key: String,
     contentDescription: String,
     label: String,
+    isError: Boolean,
     onTextChanged: (String) -> Unit
 ) {
     OutlinedTextField(
@@ -154,7 +164,8 @@ private fun KeysTextField(
                 contentDescription = contentDescription
             )
         },
-        label = { Text(text = label) }
+        label = { Text(text = label) },
+        isError = isError
     )
 }
 
@@ -181,7 +192,7 @@ private fun ScreenPreview() {
         apiKey = "abjodfet4382653",
         onApiKeyChanged = {},
         vibrationEnabled = true,
-        onCxKeyChanged = {}, cxKey = "dsfghj4r6thd"
+        onCxKeyChanged = {}, cxKey = "dsfghj4r6thd", isCxError = false, isApiError = true
     ) {
 
     }
