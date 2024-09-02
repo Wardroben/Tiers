@@ -75,10 +75,13 @@ fun SettingsBody(
     val instructionBeforeLink = stringResource(id = R.string.google_api_instruction_before_link)
     val instructionAfterLink = stringResource(id = R.string.google_api_instruction_after_link)
     val linkText = stringResource(id = R.string.google_api_instruction_link)
+    val textStyle = MaterialTheme.colorScheme.onSurface
     val linkStyle = MaterialTheme.colorScheme.primary
     val instructionText = remember {
         buildAnnotatedString {
-            append(instructionBeforeLink)
+            withStyle(style = SpanStyle(color = textStyle)) {
+                append(instructionBeforeLink)
+            }
             pushStringAnnotation(
                 tag = "instruction",
                 annotation = "https://developers.google.com/custom-search/v1/using_rest?hl=ru#making_a_request"
@@ -88,7 +91,9 @@ fun SettingsBody(
             }
             pop()
             append("\n\n")
-            append(instructionAfterLink)
+            withStyle(style = SpanStyle(color = textStyle)) {
+                append(instructionAfterLink)
+            }
         }
     }
     Column(
