@@ -41,13 +41,13 @@ fun SettingsScreen(
     navigateBack: () -> Unit
 ) {
     val uiState = viewModel.settingsStream.collectAsStateWithLifecycle().value
-
     Scaffold(
         modifier = modifier,
         topBar = { SettingsTopBar(navigateBack = navigateBack) }
     ) { innerPadding ->
         SettingsBody(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier
+                .padding(innerPadding),
             apiKey = uiState.apiKey,
             isApiError = uiState.apiError,
             cxKey = uiState.cx,
@@ -115,7 +115,6 @@ fun SettingsBody(
                     uriHandler.openUri(link.item)
                 }
         }
-
         //API KEY
         KeysTextField(
             key = apiKey,
@@ -130,11 +129,10 @@ fun SettingsBody(
             label = stringResource(id = R.string.cx_key_cd),
             isError = isCxError
         ) { cx -> onCxKeyChanged(cx) }
-
         AnimatedVisibility(visible = isCxError || isApiError) {
             Text(
                 text = stringResource(R.string.key_error),
-                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.error)
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.error)
             )
         }
         VibrationSetting(enabled = vibrationEnabled) { enabled -> onVibrationChanged(enabled) }

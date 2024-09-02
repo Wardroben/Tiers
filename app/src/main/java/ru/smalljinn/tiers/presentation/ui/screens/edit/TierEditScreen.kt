@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVis
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -89,6 +90,7 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -361,13 +363,14 @@ fun NotAttachedImages(
             }
         }
     }
+    val animatedColor by animateColorAsState(
+        targetValue = if (dragStarted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+        label = "NotAttachedColor"
+    )
     LazyRow(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                if (dragStarted) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surface
-            )
+            .drawBehind { drawRect(animatedColor) }
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event
@@ -605,57 +608,59 @@ fun CategoryItem(
     }
 }
 
+enum class DragState {
+    STOPPED, STARTED, ELEMENT_IN
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onAddClicked: () -> Unit) {
-    var isDeleteState by remember { mutableStateOf(false) }
-    var isElementEntered by remember { mutableStateOf(false) }
+    var dragState by remember { mutableStateOf(DragState.STOPPED) }
     val dndCallback = remember {
         object : DragAndDropTarget {
             override fun onDrop(event: DragAndDropEvent): Boolean {
                 val elementId: Long =
                     event.toAndroidDragEvent().clipData.getItemAt(0).text.toString().toLong()
                 onDeleteItemDropped(elementId)
-                isDeleteState = false
-                isElementEntered = false
+                dragState = DragState.STOPPED
                 return true
             }
 
             override fun onStarted(event: DragAndDropEvent) {
                 super.onStarted(event)
-                isDeleteState = true
+                dragState = DragState.STARTED
             }
 
             override fun onEnded(event: DragAndDropEvent) {
                 super.onEnded(event)
-                isDeleteState = false
+                dragState = DragState.STOPPED
             }
 
             override fun onEntered(event: DragAndDropEvent) {
                 super.onEntered(event)
-                isElementEntered = true
+                dragState = DragState.ELEMENT_IN
             }
 
             override fun onExited(event: DragAndDropEvent) {
                 super.onExited(event)
-                isElementEntered = false
+                dragState = DragState.STARTED
             }
         }
     }
-
+    val animatedColor by animateColorAsState(
+        targetValue = when (dragState) {
+            DragState.STOPPED -> MaterialTheme.colorScheme.secondaryContainer
+            DragState.STARTED -> MaterialTheme.colorScheme.errorContainer
+            DragState.ELEMENT_IN -> MaterialTheme.colorScheme.error
+        },
+        label = "NotAttachedColor"
+    )
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(dimensionResource(id = R.dimen.image_list_size))
             .clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip)))
-            .background(
-                if (isDeleteState) {
-                    if (isElementEntered) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.errorContainer
-                } else {
-                    MaterialTheme.colorScheme.secondaryContainer
-                }
-            )
+            .drawBehind { drawRect(animatedColor) }
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event
@@ -666,7 +671,10 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onAddClicked
             )
             .clickable { onAddClicked() }
     ) {
-        AnimatedContent(targetState = isDeleteState, label = "AddEditItemState") { deleteState ->
+        AnimatedContent(
+            targetState = dragState != DragState.STOPPED,
+            label = "AddEditItemState"
+        ) { deleteState ->
             if (deleteState) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
@@ -725,7 +733,6 @@ fun GoogleImageModalBottomSheet(
     val itemSpacing = dimensionResource(id = R.dimen.item_spacing)
     val roundCornerSize = dimensionResource(id = R.dimen.round_clip)
     val minImageSize = remember { 80.dp }
-    val maxImageSize = remember { 160.dp }
     val spacing = remember { 20.dp }
 
     LaunchedEffect(key1 = Unit) {

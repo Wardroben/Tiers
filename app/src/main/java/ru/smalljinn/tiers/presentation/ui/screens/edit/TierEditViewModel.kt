@@ -54,8 +54,7 @@ sealed class SheetState {
         val images: List<String>,
         val loading: Boolean,
         val errorMessage: String? = null
-    ) :
-        SheetState()
+    ) : SheetState()
 }
 
 @Immutable
