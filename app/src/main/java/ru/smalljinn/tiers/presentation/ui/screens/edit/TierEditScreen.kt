@@ -91,6 +91,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -273,6 +274,7 @@ private fun EditableTierName(
             imeAction = ImeAction.Done
         ),
         lineLimits = TextFieldLineLimits.SingleLine,
+        cursorBrush = SolidColor(LocalContentColor.current),
         modifier = Modifier
             .fillMaxWidth()
             .padding(end = dimensionResource(id = R.dimen.textfield_padding))
