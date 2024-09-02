@@ -13,7 +13,11 @@ import ru.smalljinn.tiers.data.database.model.TierList
 
 const val DATABASE_NAME = "tier_db"
 
-@Database(entities = [TierList::class, TierCategory::class, TierElement::class], version = 1)
+@Database(
+    entities = [TierList::class, TierCategory::class, TierElement::class],
+    version = 1,
+    exportSchema = true
+)
 //@TypeConverters(ColorConverter::class)
 abstract class TierDatabase : RoomDatabase() {
     abstract fun tierListDao(): TierListDao

@@ -238,7 +238,15 @@ fun TierEditScreen(
                             )
                         )
                     },
-                    onSearchClicked = { query -> viewModel.obtainEvent(EditEvent.SearchImages(query)) },
+                    onSearchClicked = { query ->
+                        if (connectionStatus == ConnectivityObserver.ConnectionStatus.AVAILABLE)
+                            viewModel.obtainEvent(EditEvent.SearchImages(query))
+                        else Toast.makeText(
+                            context,
+                            context.getString(R.string.no_internet_message),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
                     imagesLoading = uiState.sheetState.loading,
                     errorMessage = uiState.sheetState.errorMessage
                 )
