@@ -33,4 +33,5 @@
     <string name="google_api_instruction_after_link">"Briefly, you need to create a project, get the API key for it, and then create a search engine and get the CX key, and then enter it into the text fields above.\n\nIf you leave the fields blank, the default key will be used, but it has a limit of 100 requests per day, so it may not work. "</string>
     <string name="search_images_instruction_cd">Instructions on how to set up an image search</string>
     <string name="google_api_instruction_link">Instruction</string>
+    <string name="key_error">API or CX keys is incorrect. Default keys will be used.</string>
 </resources>

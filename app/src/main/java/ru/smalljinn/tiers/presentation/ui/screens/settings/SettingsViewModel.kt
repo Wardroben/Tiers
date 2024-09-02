@@ -55,20 +55,8 @@ class SettingsViewModel(
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5_000L),
-        SettingsUiState()
+        SettingsUiState(apiError = false, cxError = false)
     )
-
-    /*preferencesRepository.getSettingsStream().map
-    {
-        settings ->
-        with(settings) {
-            SettingsUiState(apiKey = googleApiKey, vibrationEnabled = vibrationEnabled)
-        }
-    }.stateIn(
-    viewModelScope,
-    SharingStarted.WhileSubscribed(5_000L),
-    SettingsUiState("", true)
-    )*/
 
     override fun obtainEvent(event: SettingsEvent) {
         when (event) {

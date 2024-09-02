@@ -1,5 +1,6 @@
 package ru.smalljinn.tiers.presentation.ui.screens.settings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -129,6 +130,13 @@ fun SettingsBody(
             label = stringResource(id = R.string.cx_key_cd),
             isError = isCxError
         ) { cx -> onCxKeyChanged(cx) }
+
+        AnimatedVisibility(visible = isCxError || isApiError) {
+            Text(
+                text = stringResource(R.string.key_error),
+                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.error)
+            )
+        }
         VibrationSetting(enabled = vibrationEnabled) { enabled -> onVibrationChanged(enabled) }
     }
 }
