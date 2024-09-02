@@ -34,4 +34,9 @@
     <string name="search_images_instruction_cd">Instructions on how to set up an image search</string>
     <string name="google_api_instruction_link">Instruction</string>
     <string name="key_error">API or CX keys is incorrect. Default keys will be used.</string>
+    <string name="incorrect_keys_sheet_message">Incorrect API or CX keys. Please, go to the app settings and fix it.</string>
+    <string name="http_error_sheet_message">Internet error</string>
+    <string name="unexpected_error_sheet_message">Unexpected Error</string>
+    <string name="io_error_sheet_message">Connection error: %1$s</string>
+    <string name="no_internet_message">Can\'t search images without Internet connection</string>
 </resources>

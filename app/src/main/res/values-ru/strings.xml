@@ -35,4 +35,9 @@
     <string name="search_images_instruction_cd">Инструкция настройки поиска изображений</string>
     <string name="google_api_instruction_link">Инструкция</string>
     <string name="key_error">API или CX ключи неверны. Будут использованы ключи по умолчанию.</string>
+    <string name="incorrect_keys_sheet_message">Неверный API или CX ключ. Перейди в настройки приложения и исправь их.</string>
+    <string name="http_error_sheet_message">Интернет ошибка</string>
+    <string name="unexpected_error_sheet_message">Неожиданная ошибка</string>
+    <string name="io_error_sheet_message">Ошибка соедиения: %1$s</string>
+    <string name="no_internet_message">Невозможно искать изображения без Интернет соединения</string>
 </resources>

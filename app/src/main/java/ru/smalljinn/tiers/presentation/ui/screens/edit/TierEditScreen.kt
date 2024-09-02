@@ -7,6 +7,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.util.Log
 import android.view.HapticFeedbackConstants
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
@@ -123,6 +124,7 @@ import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
 import ru.smalljinn.tiers.presentation.ui.screens.components.keyboardAsState
+import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import kotlin.math.roundToInt
@@ -137,8 +139,13 @@ fun TierEditScreen(
     viewModel: TierEditViewModel = viewModel(factory = TierEditViewModel.Factory)
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val settings = viewModel.settingsStream.collectAsStateWithLifecycle().value
+    val connectionStatus =
+        viewModel.connectionStatusStream.collectAsStateWithLifecycle(
+            initialValue = ConnectivityObserver.ConnectionStatus.UNAVAILABLE
+        ).value
     val focusManager = LocalFocusManager.current
     val isKeyboardOpened = keyboardAsState()
     val mediaLauncher =
@@ -159,7 +166,15 @@ fun TierEditScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { viewModel.obtainEvent(EditEvent.OpenSearchSheet) }) {
+                        IconButton(onClick = {
+                            if (connectionStatus == ConnectivityObserver.ConnectionStatus.AVAILABLE)
+                                viewModel.obtainEvent(EditEvent.OpenSearchSheet)
+                            else Toast.makeText(
+                                context,
+                                context.getString(R.string.no_internet_message),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = stringResource(R.string.search_images_via_internet)
@@ -750,7 +765,7 @@ fun GoogleImageModalBottomSheet(
             AnimatedVisibility(visible = !errorMessage.isNullOrEmpty()) {
                 Text(
                     text = errorMessage ?: "no errors",
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.error)
                 )
             }
             AnimatedVisibility(visible = imagesLoading) { if (imagesLoading) CircularProgressIndicator() }

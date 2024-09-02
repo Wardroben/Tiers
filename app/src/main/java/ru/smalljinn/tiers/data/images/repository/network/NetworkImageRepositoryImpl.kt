@@ -1,11 +1,12 @@
 package ru.smalljinn.tiers.data.images.repository.network
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import coil.network.HttpException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.images.model.Image
 import ru.smalljinn.tiers.data.images.repository.device.PhotoProcessor
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
@@ -14,6 +15,8 @@ import ru.smalljinn.tiers.presentation.ui.screens.settings.API_REGEX
 import ru.smalljinn.tiers.presentation.ui.screens.settings.CX_REGEX
 import ru.smalljinn.tiers.util.Result
 import java.io.IOException
+
+const val TAG = "NetworkImage"
 
 @JvmInline
 value class GoogleApiKey(val key: String) {
@@ -32,7 +35,8 @@ value class CxKey(val cx: String) {
 class NetworkImageRepositoryImpl(
     private val preferencesRepository: PreferencesRepository,
     private val googleSearchApi: GoogleSearchApi,
-    private val photoProcessor: PhotoProcessor
+    private val photoProcessor: PhotoProcessor,
+    private val appContext: Context
 ) : NetworkImageRepository {
     override suspend fun getNetworkImagesList(query: String): Flow<Result<List<Image>>> {
         val settings = preferencesRepository.getSettingsStream().first()
@@ -52,15 +56,27 @@ class NetworkImageRepositoryImpl(
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
-                emit(Result.Error(message = "IO Error"))
+                emit(
+                    Result.Error(
+                        message = appContext.getString(
+                            R.string.io_error_sheet_message,
+                            e.message
+                        )
+                    )
+                )
                 return@flow
-            } catch (e: HttpException) {
+            } catch (e: retrofit2.HttpException) {
                 e.printStackTrace()
-                emit(Result.Error(message = "Internet Error"))
+                emit(
+                    Result.Error(
+                        message = if (e.code() == 400) appContext.getString(R.string.incorrect_keys_sheet_message)
+                        else appContext.getString(R.string.http_error_sheet_message)
+                    )
+                )
                 return@flow
             } catch (e: Exception) {
                 e.printStackTrace()
-                emit(Result.Error(message = "Unexpected Error"))
+                emit(Result.Error(message = appContext.getString(R.string.unexpected_error_sheet_message)))
                 return@flow
             } finally {
                 emit(Result.Loading(false))
@@ -68,9 +84,6 @@ class NetworkImageRepositoryImpl(
 
             emit(Result.Success(imagesFromQuery))
         }
-        //working.emit(true)
-        //working.emit(false)
-        //return imagesFromQuery
     }
 
     override suspend fun compressAndSaveImage(bitmap: Bitmap): Flow<Result<Uri>> {
@@ -80,8 +93,5 @@ class NetworkImageRepositoryImpl(
             emit(Result.Loading(false))
             emit(Result.Success(compressedImage))
         }
-        //working.emit(true)
-        //working.emit(false)
-        //return compressedImage
     }
 }

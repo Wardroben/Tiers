@@ -80,6 +80,7 @@ object AppModule {
 
     @Provides
     fun provideSearchRepository(
+        @ApplicationContext context: Context,
         googleSearchService: GoogleSearchApi,
         photoProcessor: PhotoProcessor,
         preferencesRepository: PreferencesRepository
@@ -87,6 +88,7 @@ object AppModule {
         NetworkImageRepositoryImpl(
             googleSearchApi = googleSearchService,
             photoProcessor = photoProcessor,
-            preferencesRepository = preferencesRepository
+            preferencesRepository = preferencesRepository,
+            appContext = context
         )
 }

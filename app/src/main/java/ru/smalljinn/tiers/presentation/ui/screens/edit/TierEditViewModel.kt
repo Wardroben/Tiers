@@ -32,6 +32,7 @@ import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.presentation.navigation.EDIT_TIER_NAV_ARGUMENT
 import ru.smalljinn.tiers.util.EventHandler
 import ru.smalljinn.tiers.util.Result
+import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 
 private const val TIER_LIST_UNTITLED_NAME = "Untitled"
 
@@ -76,7 +77,6 @@ data class ImageSearchState(
     val errorMessage: String? = null
 )
 
-
 /**
  * Set categoryId to null for all elements to unpin them
  */
@@ -91,7 +91,8 @@ class TierEditViewModel(
     private val deleteElementsUseCase: DeleteElementsUseCase,
     private val savedStateHandle: SavedStateHandle,
     private val networkImageRepository: NetworkImageRepository,
-    private val preferencesRepository: PreferencesRepository
+    private val preferencesRepository: PreferencesRepository,
+    connectivityObserver: ConnectivityObserver
 ) : ViewModel(), EventHandler<EditEvent> {
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
         ?: throw IllegalArgumentException("Bad navigation argument")
@@ -103,13 +104,9 @@ class TierEditViewModel(
         categoryRepository.getCategoriesWithElementsOfListStream(currentListId)
 
     private val sheetAction = MutableStateFlow<SheetAction>(SheetAction.Init)
-    //private val sheetState = MutableStateFlow<SheetState>(SheetState.Hidden)
-
-    /*private var searchQuery by mutableStateOf("")
-    private val imagesFromSearch = MutableStateFlow<List<String>>(emptyList())
-    private val imagesLoading = MutableStateFlow(false)*/
-
     private val searchStateStream = MutableStateFlow(ImageSearchState())
+
+    val connectionStatusStream = connectivityObserver.observe()
 
     val settingsStream = preferencesRepository.getSettingsStream()
         .stateIn(
@@ -118,15 +115,7 @@ class TierEditViewModel(
             initialValue = UserSettings()
         )
 
-    private val sheetUiState = combine(
-        sheetAction,
-        /*snapshotFlow { searchQuery },
-        imagesFromSearch,
-        imagesLoading*/
-        searchStateStream
-    ) { action, state
-        //query, images, loading
-        ->
+    private val sheetUiState = combine(sheetAction, searchStateStream) { action, state ->
         when (action) {
             is SheetAction.EditCategory -> SheetState.CategoryEditing(action.category)
             is SheetAction.CreateCategory -> SheetState.CategoryCreation(action.newCategory)
@@ -260,17 +249,6 @@ class TierEditViewModel(
             is EditEvent.HideSheet -> sheetAction.update { SheetAction.Hide }
 
             is EditEvent.ReorderElements -> {
-                //TODO make use case
-                /*viewModelScope.launch {
-                    val firstElement = elementRepository.getElementById(event.firstId)
-                    val secondElement = elementRepository.getElementById(event.secondId)
-
-                    val swappedElements = listOf(
-                        secondElement.copy(position = firstElement.position),
-                        firstElement.copy(position = secondElement.position)
-                    )
-                    elementRepository.insertTierElements(swappedElements)
-                }*/
                 viewModelScope.launch {
                     elementRepository.reorderElements(
                         draggedElementId = event.firstId,
@@ -357,6 +335,7 @@ class TierEditViewModel(
                     deleteElementsUseCase = deleteElementsUseCase,
                     networkImageRepository = networkImageRepository,
                     preferencesRepository = appContainer.preferencesRepository,
+                    connectivityObserver = appContainer.connectivityObserver,
                     savedStateHandle = createSavedStateHandle()
                 )
             }

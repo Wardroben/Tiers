@@ -30,6 +30,8 @@ import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepositoryImpl
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
+import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
+import ru.smalljinn.tiers.util.network.observer.NetworkConnectivityObserver
 
 
 class TierApp : Application() {
@@ -69,6 +71,7 @@ interface AppContainer {
     val deleteElementsUseCase: DeleteElementsUseCase
     val deleteTierListUseCase: DeleteTierListUseCase
     val preferencesRepository: PreferencesRepository
+    val connectivityObserver: ConnectivityObserver
 }
 
 private class AppContainerImpl(
@@ -88,7 +91,12 @@ private class AppContainerImpl(
     override val tierListRepository: TierListRepository
         get() = TierListRepositoryImpl(tierListDao)
     override val networkImageRepository: NetworkImageRepository
-        get() = NetworkImageRepositoryImpl(preferencesRepository, googleSearchApi, photoProcessor)
+        get() = NetworkImageRepositoryImpl(
+            preferencesRepository,
+            googleSearchApi,
+            photoProcessor,
+            appContext
+        )
     override val createNewTierListUseCase: CreateNewTierListUseCase
         get() = CreateNewTierListUseCase(tierListRepository, tierCategoryRepository)
     override val deleteElementsUseCase: DeleteElementsUseCase
@@ -101,4 +109,6 @@ private class AppContainerImpl(
         )
     override val preferencesRepository: PreferencesRepository
         get() = PreferencesRepositoryImpl(appContext = appContext)
+    override val connectivityObserver: ConnectivityObserver
+        get() = NetworkConnectivityObserver(appContext = appContext)
 }
