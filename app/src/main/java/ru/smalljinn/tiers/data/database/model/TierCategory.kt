@@ -26,7 +26,6 @@ data class TierCategory(
     val name: String = STANDARD_CATEGORY_NAME,
     @ColumnInfo(name = "color_argb") val colorArgb: Int = Color.LightGray.toArgb(),
     val position: Int
-    //val elements: List<TierElement>
 ) {
     @Ignore
     val color: Color = Color(colorArgb)

@@ -8,4 +8,5 @@ sealed class TiersEvent {
     data class CreateNew(val name: String) : TiersEvent()
     data class Search(val query: String) : TiersEvent()
     data object ClearSearch : TiersEvent()
+    data class ShareList(val listId: Long) : TiersEvent()
 }

@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".TierApp"
         android:allowBackup="true"
@@ -21,10 +22,32 @@
             android:theme="@style/Theme.Tiers">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+
+                <data android:scheme="content" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/tier" />
+            </intent-filter>
+
         </activity>
+
+        <provider
+            android:name=".data.TierFileProvider"
+            android:authorities="com.mydomain.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

@@ -1,5 +1,6 @@
 package ru.smalljinn.tiers.presentation.ui.screens.tierslist
 
+import android.content.Intent
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,8 +11,10 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.TierApp
@@ -19,6 +22,7 @@ import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.ExportShareListUseCase
 import ru.smalljinn.tiers.util.EventHandler
 
 sealed class TiersState {
@@ -28,11 +32,15 @@ sealed class TiersState {
     @Immutable
     data class Success(val tiersList: List<TierListWithCategories>) : TiersState()
 }
+sealed class ListEvent {
+    data class StartIntent(val intent: Intent) : ListEvent()
+}
 
 class TiersListViewModel(
     private val tierListRepository: TierListRepository,
     private val createNewTierListUseCase: CreateNewTierListUseCase,
-    private val deleteTierListUseCase: DeleteTierListUseCase
+    private val deleteTierListUseCase: DeleteTierListUseCase,
+    private val exportShareListUseCase: ExportShareListUseCase
 ) : ViewModel(), EventHandler<TiersEvent> {
 
     var searchQuery by mutableStateOf("")
@@ -52,6 +60,9 @@ class TiersListViewModel(
         TiersState.Loading
     )
 
+    private val eventChannel = Channel<ListEvent>()
+    val eventsFlow = eventChannel.receiveAsFlow()
+
     override fun obtainEvent(event: TiersEvent) {
         when (event) {
             is TiersEvent.ChangeName -> viewModelScope.launch {
@@ -69,6 +80,11 @@ class TiersListViewModel(
             is TiersEvent.Search -> searchQuery = event.query
 
             TiersEvent.ClearSearch -> searchQuery = ""
+
+            is TiersEvent.ShareList -> viewModelScope.launch {
+                val intent = exportShareListUseCase.invoke(event.listId)
+                eventChannel.send(ListEvent.StartIntent(intent))
+            }
         }
     }
 
@@ -89,7 +105,8 @@ class TiersListViewModel(
                 TiersListViewModel(
                     repository,
                     app.createNewTierListUseCase,
-                    app.deleteTierListUseCase
+                    app.deleteTierListUseCase,
+                    app.exportShareListUseCase
                 )
             }
         }

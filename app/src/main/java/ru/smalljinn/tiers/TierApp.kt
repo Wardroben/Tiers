@@ -16,10 +16,10 @@ import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepositoryImpl
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepositoryImpl
+import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
+import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessorImpl
 import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepository
 import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepositoryImpl
-import ru.smalljinn.tiers.data.images.repository.device.PhotoProcessor
-import ru.smalljinn.tiers.data.images.repository.device.PhotoProcessorImpl
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryImpl
 import ru.smalljinn.tiers.data.images.source.BASE_URL
@@ -27,9 +27,13 @@ import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
 import ru.smalljinn.tiers.data.images.source.JSON_FORMAT
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepositoryImpl
+import ru.smalljinn.tiers.data.share.repository.ShareRepositoryImpl
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.CreateShareListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.ExportShareListUseCase
+import ru.smalljinn.tiers.domain.usecase.ImportListUseCase
 import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 import ru.smalljinn.tiers.util.network.observer.NetworkConnectivityObserver
 
@@ -72,6 +76,8 @@ interface AppContainer {
     val deleteTierListUseCase: DeleteTierListUseCase
     val preferencesRepository: PreferencesRepository
     val connectivityObserver: ConnectivityObserver
+    val exportShareListUseCase: ExportShareListUseCase
+    val importListUseCase: ImportListUseCase
 }
 
 private class AppContainerImpl(
@@ -111,4 +117,20 @@ private class AppContainerImpl(
         get() = PreferencesRepositoryImpl(appContext = appContext)
     override val connectivityObserver: ConnectivityObserver
         get() = NetworkConnectivityObserver(appContext = appContext)
+    override val exportShareListUseCase: ExportShareListUseCase
+        get() = ExportShareListUseCase(
+            shareRepository = ShareRepositoryImpl(appContext),
+            createShareListUseCase = CreateShareListUseCase(
+                elementRepository = tierElementRepository,
+                listRepository = tierListRepository,
+                photoProcessor = photoProcessor
+            )
+        )
+    override val importListUseCase: ImportListUseCase
+        get() = ImportListUseCase(
+            photoProcessor,
+            tierListRepository,
+            tierCategoryRepository,
+            tierElementRepository
+        )
 }

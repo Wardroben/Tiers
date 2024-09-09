@@ -1,7 +1,8 @@
-package ru.smalljinn.tiers.data.images.repository.device
+package ru.smalljinn.tiers.data.images.photo_processor
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Bitmap.CompressFormat
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
@@ -10,11 +11,13 @@ import androidx.core.net.toFile
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
 import kotlin.math.roundToInt
+
 
 const val COMPRESSED_PHOTOS_OUTPUT_DIR = "images/"
 private const val TAG = "PhotoProcessorImpl"
@@ -57,10 +60,42 @@ class PhotoProcessorImpl(
     }
 
     override suspend fun compressAndSaveImageFromInternet(bitmap: Bitmap): Uri {
-        //val scaledImage = scaleImage(bitmap)
         val compressedImageUri = saveCompressedImage(bitmap)
         Log.i(TAG, "Image from internet successfully saved path: $compressedImageUri")
         return compressedImageUri
+    }
+
+    override fun readImageBytes(uri: Uri): ByteArray {
+        val bitmap = readImage(uri)
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(CompressFormat.PNG, 0, stream)
+        val bytes = stream.toByteArray()
+        stream.close()
+        return bytes
+    }
+
+    override fun importImage(bytes: ByteArray): Uri {
+        val fileName = getRandomName()
+        checkAndCreateOutputDir()
+
+        val imageFile = File(outputDirectory, fileName)
+        try {
+            FileOutputStream(imageFile).use { stream ->
+                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 0, stream)
+                } else {
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            throw e
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
+        }
+        return imageFile.toUri()
     }
 
     private fun readImage(uri: Uri): Bitmap {
@@ -71,6 +106,10 @@ class PhotoProcessorImpl(
         } catch (e: IOException) {
             Log.e(TAG, e.toString())
             throw IOException(e.message)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e(TAG, e.toString())
+            throw e
         }
     }
 
@@ -95,12 +134,12 @@ class PhotoProcessorImpl(
     }
 
     private fun saveCompressedImage(bitmap: Bitmap): Uri {
-        val fileName = "image_${UUID.randomUUID()}"
-        if (!outputDirectory.exists()) outputDirectory.mkdirs()
+        val fileName = getRandomName()
+        checkAndCreateOutputDir()
 
-        val photoFile = File(outputDirectory, fileName)
+        val imageFile = File(outputDirectory, fileName)
         try {
-            FileOutputStream(photoFile).use { outputStream ->
+            FileOutputStream(imageFile).use { outputStream ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, outputStream)
                 } else {
@@ -111,7 +150,13 @@ class PhotoProcessorImpl(
             Log.e(TAG, e.message.toString())
             throw IOException(e.message)
         }
-        Log.v(TAG, "Image saved to file: ${photoFile.absolutePath}")
-        return photoFile.toUri()
+        Log.v(TAG, "Image saved to file: ${imageFile.absolutePath}")
+        return imageFile.toUri()
+    }
+
+    private fun getRandomName() = "image_${UUID.randomUUID()}"
+
+    private fun checkAndCreateOutputDir() {
+        if (!outputDirectory.exists()) outputDirectory.mkdirs()
     }
 }

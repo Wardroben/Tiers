@@ -16,8 +16,10 @@ import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.CreateShareListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
+import ru.smalljinn.tiers.domain.usecase.ExportShareListUseCase
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersListViewModel
 import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersState
 import java.io.IOException
@@ -41,7 +43,15 @@ class TiersListViewModelTests {
         viewmodel = TiersListViewModel(
             tierListRepository = tierRepository,
             createNewTierListUseCase = CreateNewTierListUseCase(tierRepository, categoryRepository),
-            deleteTierListUseCase = deleteTierListUseCase
+            deleteTierListUseCase = deleteTierListUseCase,
+            exportShareListUseCase = ExportShareListUseCase(
+                shareRepository = MockShareRepository(),
+                createShareListUseCase = CreateShareListUseCase(
+                    elementRepository = elementRepository,
+                    listRepository = tierRepository,
+                    photoProcessor = MockPhotoProcessor()
+                )
+            )
         )
     }
 

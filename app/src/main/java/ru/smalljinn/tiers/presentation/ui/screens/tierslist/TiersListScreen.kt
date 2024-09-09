@@ -1,5 +1,6 @@
 package ru.smalljinn.tiers.presentation.ui.screens.tierslist
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -49,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -71,6 +73,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
@@ -90,9 +93,8 @@ fun TiersListScreen(
     val context = LocalContext.current
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val tiersScrollState = rememberLazyListState()
-    val createNewTierList = {
-        viewModel.obtainEvent(TiersEvent.CreateNew(name = context.getString(R.string.untitled_tierlist_name)))
-    }
+    val createNewTierList =
+        { viewModel.obtainEvent(TiersEvent.CreateNew(name = context.getString(R.string.untitled_tierlist_name))) }
     val showAddButton by remember {
         derivedStateOf {
             tiersScrollState.canScrollForward
@@ -100,6 +102,22 @@ fun TiersListScreen(
     }
     val scrollToTop = { scope.launch { tiersScrollState.animateScrollToItem(0) } }
 
+    LaunchedEffect(key1 = Unit) {
+        viewModel.eventsFlow.collectLatest { event ->
+            when (event) {
+                is ListEvent.StartIntent -> {
+                    val intent = Intent().apply {
+                        setAction(Intent.ACTION_SEND)
+                        putExtra(Intent.EXTRA_TEXT, "Aboba")
+                        putExtra(Intent.EXTRA_TITLE, "Theme")
+                        setType("*/*")
+                    }
+                    context.startActivity(event.intent)
+                }
+            }
+        }
+    }
+    
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -142,7 +160,8 @@ fun TiersListScreen(
             onClearSearchQuery = { viewModel.obtainEvent(TiersEvent.ClearSearch) },
             onSearchChanged = { query -> viewModel.obtainEvent(TiersEvent.Search(query)) },
             searchQuery = viewModel.searchQuery,
-            onTierListClicked = { tierList: TierList -> navigateToEdit(tierList.id) }
+            onTierListClicked = { tierList: TierList -> navigateToEdit(tierList.id) },
+            onShareTierClicked = { listId -> viewModel.obtainEvent(TiersEvent.ShareList(listId)) }
         )
     }
 }
@@ -157,7 +176,8 @@ fun TiersListBody(
     onClearSearchQuery: () -> Unit,
     onSearchChanged: (String) -> Unit,
     searchQuery: String,
-    onTierListClicked: (TierList) -> Unit
+    onTierListClicked: (TierList) -> Unit,
+    onShareTierClicked: (id: Long) -> Unit
 ) {
     var dialogVisible by rememberSaveable { mutableStateOf(false) }
     var tierListToDelete by remember { mutableStateOf<TierList?>(null) }
@@ -186,7 +206,8 @@ fun TiersListBody(
             onClearSearchQuery = onClearSearchQuery,
             onSearchChanged = onSearchChanged,
             searchQuery = searchQuery,
-            onTierListClicked = onTierListClicked
+            onTierListClicked = onTierListClicked,
+            onShareTierClicked = onShareTierClicked
         )
     }
 }
@@ -202,7 +223,8 @@ fun TiersColumn(
     onSearchChanged: (String) -> Unit,
     searchQuery: String,
     tiersListState: LazyListState = rememberLazyListState(),
-    onTierListClicked: (TierList) -> Unit
+    onTierListClicked: (TierList) -> Unit,
+    onShareTierClicked: (id: Long) -> Unit
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -224,7 +246,8 @@ fun TiersColumn(
                 modifier = Modifier.animateItemPlacement(),
                 tierList = tierList,
                 onDeleteTierClicked = { onDeleteTierClicked(tierList.list) },
-                onTierListClicked = onTierListClicked
+                onTierListClicked = onTierListClicked,
+                onShareTierClicked = { onShareTierClicked(tierList.list.id) }
             )
         }
         item {
@@ -292,7 +315,8 @@ fun TierListItem(
     modifier: Modifier = Modifier,
     tierList: TierListWithCategories,
     onDeleteTierClicked: () -> Unit,
-    onTierListClicked: (TierList) -> Unit
+    onTierListClicked: (TierList) -> Unit,
+    onShareTierClicked: () -> Unit
 ) {
     Card(
         modifier = modifier
@@ -320,7 +344,8 @@ fun TierListItem(
                 TierManageButtons(
                     modifier = Modifier.fillMaxWidth(),
                     onDeleteTierClicked = onDeleteTierClicked,
-                    onShareTierClicked = {})
+                    onShareTierClicked = onShareTierClicked
+                )
             }
         }
     }
@@ -451,6 +476,7 @@ private fun TierListItemPreview() {
     TierListItem(
         onDeleteTierClicked = {},
         onTierListClicked = {},
+        onShareTierClicked = {},
         tierList = TierListWithCategories(
             list = TierList(name = "Jojo"),
             categories = listOf(

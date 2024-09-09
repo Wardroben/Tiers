@@ -2,6 +2,7 @@ package ru.smalljinn.tiers.data.images.repository.device
 
 import android.net.Uri
 import kotlinx.coroutines.flow.MutableStateFlow
+import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 
 class DevicePhotoRepositoryImpl(
     private val photoProcessor: PhotoProcessor

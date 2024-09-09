@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.images.model.Image
-import ru.smalljinn.tiers.data.images.repository.device.PhotoProcessor
+import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.presentation.ui.screens.settings.API_REGEX

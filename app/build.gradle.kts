@@ -17,7 +17,7 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "0.1"
+        versionName = "0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.retrofit2.converter)
     implementation(libs.okhttp3)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.cbor)
 
     implementation(libs.hilt)
     kapt(libs.hilt.compiler)
