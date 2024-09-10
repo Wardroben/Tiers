@@ -2,11 +2,8 @@ package ru.smalljinn.tiers.features.tier_edit
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +11,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ru.smalljinn.tiers.TierApp
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.data.database.model.TierList
@@ -30,6 +26,7 @@ import ru.smalljinn.tiers.navigation.EDIT_TIER_NAV_ARGUMENT
 import ru.smalljinn.tiers.util.EventHandler
 import ru.smalljinn.tiers.util.Result
 import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
+import javax.inject.Inject
 
 /**
  * Set categoryId to null for all elements to unpin them
@@ -37,19 +34,20 @@ import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 private fun List<TierElement>.unpinElements() =
     this.map { element -> element.copy(categoryId = null) }
 
-class TierEditViewModel(
+@HiltViewModel
+class TierEditViewModel @Inject constructor(
     private val deviceImageRepository: DeviceImageRepository,
     private val categoryRepository: TierCategoryRepository,
     private val elementRepository: TierElementRepository,
     private val listRepository: TierListRepository,
     private val networkImageRepository: NetworkImageRepository,
-    private val preferencesRepository: PreferencesRepository,
+    preferencesRepository: PreferencesRepository,
     private val deleteElementsUseCase: DeleteElementsUseCase,
     private val insertElementsUseCase: InsertElementsUseCase,
     private val unpinElementsUseCase: UnpinElementsUseCase,
     private val pinElementUseCase: PinElementUseCase,
     private val removeCategoryUseCase: RemoveCategoryUseCase,
-    private val savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
     connectivityObserver: ConnectivityObserver
 ) : ViewModel(), EventHandler<EditEvent> {
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
@@ -263,34 +261,6 @@ class TierEditViewModel(
 
             is EditEvent.OpenSearchSheet -> {
                 sheetAction.update { SheetAction.SearchImages }
-            }
-        }
-    }
-
-    companion object {
-        val Factory = viewModelFactory {
-            initializer {
-                val appContainer = (this[APPLICATION_KEY] as TierApp).appContainer
-                val categoryRepo = appContainer.tierCategoryRepository
-                val elementRepo = appContainer.tierElementRepository
-                val listRepo = appContainer.tierListRepository
-                val deleteElementsUseCase = appContainer.deleteElementsUseCase
-                val networkImageRepository = appContainer.networkImageRepository
-                TierEditViewModel(
-                    categoryRepository = categoryRepo,
-                    listRepository = listRepo,
-                    elementRepository = elementRepo,
-                    deviceImageRepository = appContainer.deviceImageRepository,
-                    deleteElementsUseCase = deleteElementsUseCase,
-                    networkImageRepository = networkImageRepository,
-                    preferencesRepository = appContainer.preferencesRepository,
-                    connectivityObserver = appContainer.connectivityObserver,
-                    pinElementUseCase = appContainer.pinElementUseCase,
-                    unpinElementsUseCase = appContainer.unpinElementsUseCase,
-                    removeCategoryUseCase = appContainer.removeCategoryUseCase,
-                    insertElementsUseCase = appContainer.insertElementsUseCase,
-                    savedStateHandle = createSavedStateHandle()
-                )
             }
         }
     }

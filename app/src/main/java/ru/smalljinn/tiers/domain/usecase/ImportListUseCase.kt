@@ -8,10 +8,11 @@ import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 import ru.smalljinn.tiers.data.share.models.ShareList
+import javax.inject.Inject
 
 fun ShareList.toEntity() = TierList(name = name)
 
-class ImportListUseCase(
+class ImportListUseCase @Inject constructor(
     private val photoProcessor: PhotoProcessor,
     private val listRepository: TierListRepository,
     private val categoryRepository: TierCategoryRepository,

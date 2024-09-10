@@ -5,8 +5,12 @@ import ru.smalljinn.tiers.data.database.dao.TierListDao
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.model.TierListWithCategoriesAndElements
+import javax.inject.Inject
 
-class TierListRepositoryImpl(private val tierListDao: TierListDao) : TierListRepository {
+
+class TierListRepositoryImpl @Inject constructor(
+    private val tierListDao: TierListDao
+) : TierListRepository {
     override fun getAllTierListsStream(): Flow<List<TierList>> {
         return tierListDao.getTierListsStream()
     }

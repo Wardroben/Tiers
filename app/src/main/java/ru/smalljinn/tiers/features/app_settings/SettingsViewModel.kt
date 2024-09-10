@@ -5,23 +5,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import ru.smalljinn.tiers.TierApp
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.util.EventHandler
+import javax.inject.Inject
 
 const val CX_REGEX = "^[A-Z0-9]+$"
 const val API_REGEX = "^[A-Z0-9-+/|]+$"
 
-class SettingsViewModel(
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository
 ) : ViewModel(), EventHandler<SettingsEvent> {
     init {
@@ -65,17 +64,6 @@ class SettingsViewModel(
                 viewModelScope.launch {
                     preferencesRepository.changeCX(cx)
                 }
-            }
-        }
-    }
-
-    companion object {
-        val Factory = viewModelFactory {
-            initializer {
-                val appContainer = (this[APPLICATION_KEY] as TierApp).appContainer
-                SettingsViewModel(
-                    preferencesRepository = appContainer.preferencesRepository
-                )
             }
         }
     }

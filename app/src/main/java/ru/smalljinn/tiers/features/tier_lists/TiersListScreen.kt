@@ -70,8 +70,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.R
@@ -84,7 +84,7 @@ import ru.smalljinn.tiers.features.components.TextOnColor
 @Composable
 fun TiersListScreen(
     modifier: Modifier = Modifier,
-    viewModel: TiersListViewModel = viewModel(factory = TiersListViewModel.Factory),
+    viewModel: TiersListViewModel = hiltViewModel(),
     navigateToEdit: (Long) -> Unit,
     navigateToSettings: () -> Unit
 ) {

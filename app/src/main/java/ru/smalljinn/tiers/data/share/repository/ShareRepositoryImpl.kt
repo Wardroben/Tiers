@@ -2,6 +2,7 @@ package ru.smalljinn.tiers.data.share.repository
 
 import android.content.Context
 import android.net.Uri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.cbor.Cbor
@@ -12,11 +13,14 @@ import ru.smalljinn.tiers.util.Result
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import javax.inject.Inject
 
 private const val SHARE_FILES_DIRECTORY = "export_files/"
 private const val SHARE_FILE_TYPE = ".tier"
 
-class ShareRepositoryImpl(private val appContext: Context) : ShareRepository {
+class ShareRepositoryImpl @Inject constructor(
+    @ApplicationContext private val appContext: Context
+) : ShareRepository {
     private val outputDirectory = File(appContext.filesDir, SHARE_FILES_DIRECTORY)
 
     @OptIn(ExperimentalSerializationApi::class)

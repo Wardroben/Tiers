@@ -6,8 +6,12 @@ import ru.smalljinn.tiers.data.database.dao.CategoryDao
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.getWithSortedElements
+import javax.inject.Inject
 
-class TierCategoryRepositoryImpl(private val categoryDao: CategoryDao) : TierCategoryRepository {
+
+class TierCategoryRepositoryImpl @Inject constructor(
+    private val categoryDao: CategoryDao
+) : TierCategoryRepository {
     override suspend fun insertCategory(category: TierCategory): Long {
         return categoryDao.insertCategory(category)
     }

@@ -4,10 +4,14 @@ import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import ru.smalljinn.tiers.data.database.dao.ElementDao
 import ru.smalljinn.tiers.data.database.model.TierElement
+import javax.inject.Inject
 
 private const val TAG = "ElementRepository"
 
-class TierElementRepositoryImpl(private val elementDao: ElementDao) : TierElementRepository {
+
+class TierElementRepositoryImpl @Inject constructor(
+    private val elementDao: ElementDao
+) : TierElementRepository {
     override suspend fun getElementById(elementId: Long): TierElement {
         return elementDao.getElementById(elementId)
     }

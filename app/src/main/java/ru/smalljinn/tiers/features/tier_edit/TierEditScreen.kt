@@ -111,8 +111,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -138,7 +138,7 @@ private const val DELAY_BEFORE_KEYBOARD_SHOWN = 250L
 @Composable
 fun TierEditScreen(
     modifier: Modifier = Modifier,
-    viewModel: TierEditViewModel = viewModel(factory = TierEditViewModel.Factory)
+    viewModel: TierEditViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -890,14 +890,14 @@ fun CategoryModalBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 //Delete button
-                AnimatedVisibility(visible = !isCategoryCreation) {
+                if (!isCategoryCreation)
                     IconButton(onClick = { onDeleteClicked(category) }) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
                             contentDescription = "Delete category ${category.name}"
                         )
                     }
-                }
+
                 //Save button
                 Button(
                     onClick = {

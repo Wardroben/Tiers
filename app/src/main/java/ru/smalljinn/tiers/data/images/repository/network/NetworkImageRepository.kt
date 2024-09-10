@@ -10,7 +10,6 @@ import ru.smalljinn.tiers.util.Result
  * @property getNetworkImagesList photos from google photo by query
  */
 interface NetworkImageRepository {
-    //val working: Flow<Boolean>
     suspend fun getNetworkImagesList(query: String): Flow<Result<List<Image>>>
     suspend fun compressAndSaveImage(bitmap: Bitmap): Flow<Result<Uri>>
 }

@@ -3,6 +3,7 @@ package ru.smalljinn.tiers.data.images.repository.network
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -15,6 +16,7 @@ import ru.smalljinn.tiers.features.app_settings.API_REGEX
 import ru.smalljinn.tiers.features.app_settings.CX_REGEX
 import ru.smalljinn.tiers.util.Result
 import java.io.IOException
+import javax.inject.Inject
 
 const val TAG = "NetworkImage"
 
@@ -32,11 +34,11 @@ value class CxKey(val cx: String) {
             && cx.contains(CX_REGEX.toRegex(RegexOption.IGNORE_CASE))
 }
 
-class NetworkImageRepositoryImpl(
+class NetworkImageRepositoryImpl @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val googleSearchApi: GoogleSearchApi,
     private val photoProcessor: PhotoProcessor,
-    private val appContext: Context
+    @ApplicationContext private val appContext: Context
 ) : NetworkImageRepository {
     override suspend fun getNetworkImagesList(query: String): Flow<Result<List<Image>>> {
         val settings = preferencesRepository.getSettingsStream().first()

@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.net.toFile
 import androidx.core.net.toUri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -16,6 +17,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.UUID
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
 
@@ -23,8 +25,8 @@ const val COMPRESSED_PHOTOS_OUTPUT_DIR = "images/"
 private const val TAG = "PhotoProcessorImpl"
 private const val TARGET_IMAGE_SIZE = 256F
 
-class PhotoProcessorImpl(
-    private val appContext: Context,
+class PhotoProcessorImpl @Inject constructor(
+    @ApplicationContext private val appContext: Context,
 ) : PhotoProcessor {
     private val outputDirectory = File(appContext.filesDir, COMPRESSED_PHOTOS_OUTPUT_DIR)
     override suspend fun compressAndSaveImages(imageUris: List<Uri>): List<Uri> =
@@ -83,9 +85,9 @@ class PhotoProcessorImpl(
             FileOutputStream(imageFile).use { stream ->
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 0, stream)
+                    bitmap.compress(CompressFormat.WEBP_LOSSLESS, 0, stream)
                 } else {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                    bitmap.compress(CompressFormat.JPEG, 100, stream)
                 }
             }
         } catch (e: IOException) {
@@ -141,9 +143,9 @@ class PhotoProcessorImpl(
         try {
             FileOutputStream(imageFile).use { outputStream ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, outputStream)
+                    bitmap.compress(CompressFormat.WEBP_LOSSY, 50, outputStream)
                 } else {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 65, outputStream)
+                    bitmap.compress(CompressFormat.JPEG, 65, outputStream)
                 }
             }
         } catch (e: IOException) {

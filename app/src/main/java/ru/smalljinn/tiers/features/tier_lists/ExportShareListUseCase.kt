@@ -6,8 +6,9 @@ import kotlinx.coroutines.withContext
 import ru.smalljinn.tiers.data.share.repository.ShareRepository
 import ru.smalljinn.tiers.domain.share.createExportIntent
 import ru.smalljinn.tiers.util.Result
+import javax.inject.Inject
 
-class ExportShareListUseCase(
+class ExportShareListUseCase @Inject constructor(
     private val createShareListUseCase: CreateShareListUseCase,
     private val shareRepository: ShareRepository,
 ) {

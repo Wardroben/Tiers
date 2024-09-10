@@ -5,22 +5,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import ru.smalljinn.tiers.TierApp
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.util.EventHandler
+import javax.inject.Inject
 
-class TiersListViewModel(
+@HiltViewModel
+class TiersListViewModel @Inject constructor(
     tierListRepository: TierListRepository,
     private val createNewTierListUseCase: CreateNewTierListUseCase,
     private val deleteTierListUseCase: DeleteTierListUseCase,
@@ -83,18 +82,4 @@ class TiersListViewModel(
     private fun shouldEnableSearch(listsCount: Int, searchQuery: String): Boolean =
         listsCount > 1 || searchQuery.isNotBlank()
 
-    companion object {
-        val Factory = viewModelFactory {
-            initializer {
-                val app = (this[APPLICATION_KEY] as TierApp).appContainer
-                val repository: TierListRepository = app.tierListRepository
-                TiersListViewModel(
-                    repository,
-                    app.createNewTierListUseCase,
-                    app.deleteTierListUseCase,
-                    app.exportShareListUseCase
-                )
-            }
-        }
-    }
 }

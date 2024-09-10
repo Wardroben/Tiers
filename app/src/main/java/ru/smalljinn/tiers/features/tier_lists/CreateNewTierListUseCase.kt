@@ -8,8 +8,9 @@ import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
+import javax.inject.Inject
 
-class CreateNewTierListUseCase(
+class CreateNewTierListUseCase @Inject constructor(
     private val tierListRepository: TierListRepository,
     private val tierCategoryRepository: TierCategoryRepository,
 ) {

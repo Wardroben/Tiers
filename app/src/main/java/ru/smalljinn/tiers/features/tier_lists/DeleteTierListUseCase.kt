@@ -6,8 +6,9 @@ import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
+import javax.inject.Inject
 
-class DeleteTierListUseCase(
+class DeleteTierListUseCase @Inject constructor(
     private val elementRepository: TierElementRepository,
     private val deleteElementsUseCase: DeleteElementsUseCase,
     private val listRepository: TierListRepository

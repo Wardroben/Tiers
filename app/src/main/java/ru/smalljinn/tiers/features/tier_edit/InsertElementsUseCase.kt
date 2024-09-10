@@ -6,10 +6,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
+import ru.smalljinn.tiers.di.IoDispatcher
+import javax.inject.Inject
 
-class InsertElementsUseCase(
+class InsertElementsUseCase @Inject constructor(
     private val elementRepository: TierElementRepository,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     suspend operator fun invoke(listId: Long, imageUri: Uri): Long {
         return withContext(dispatcher) {

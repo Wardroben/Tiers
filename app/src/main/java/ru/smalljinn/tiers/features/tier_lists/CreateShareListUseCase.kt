@@ -11,10 +11,11 @@ import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 import ru.smalljinn.tiers.data.share.models.ShareCategory
 import ru.smalljinn.tiers.data.share.models.ShareElement
 import ru.smalljinn.tiers.data.share.models.ShareList
+import javax.inject.Inject
 
 fun TierElement.toShare(image: ByteArray) = ShareElement(position, image)
 
-class CreateShareListUseCase(
+class CreateShareListUseCase @Inject constructor(
     private val elementRepository: TierElementRepository,
     private val listRepository: TierListRepository,
     private val photoProcessor: PhotoProcessor

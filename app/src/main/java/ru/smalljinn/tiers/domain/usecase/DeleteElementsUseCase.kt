@@ -5,8 +5,9 @@ import kotlinx.coroutines.coroutineScope
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.images.repository.device.DeviceImageRepository
+import javax.inject.Inject
 
-class DeleteElementsUseCase(
+class DeleteElementsUseCase @Inject constructor(
     private val elementRepository: TierElementRepository,
     private val photoRepository: DeviceImageRepository
 ) {
