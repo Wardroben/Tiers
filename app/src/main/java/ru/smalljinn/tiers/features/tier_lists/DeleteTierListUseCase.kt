@@ -1,10 +1,11 @@
-package ru.smalljinn.tiers.domain.usecase
+package ru.smalljinn.tiers.features.tier_lists
 
 import android.util.Log
 import kotlinx.coroutines.coroutineScope
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
+import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
 
 class DeleteTierListUseCase(
     private val elementRepository: TierElementRepository,

@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.ui.screens.edit
+package ru.smalljinn.tiers.features.tier_edit
 
 import android.graphics.Bitmap
 import android.net.Uri

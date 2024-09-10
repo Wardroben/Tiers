@@ -1,7 +1,5 @@
-package ru.smalljinn.tiers.presentation.ui.screens.tierslist
+package ru.smalljinn.tiers.features.tier_lists
 
-import android.content.Intent
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -20,24 +18,10 @@ import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.TierApp
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
-import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
-import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
-import ru.smalljinn.tiers.domain.usecase.ExportShareListUseCase
 import ru.smalljinn.tiers.util.EventHandler
 
-sealed class TiersState {
-    data object Loading : TiersState()
-    data object Empty : TiersState()
-
-    @Immutable
-    data class Success(val tiersList: List<TierListWithCategories>) : TiersState()
-}
-sealed class ListEvent {
-    data class StartIntent(val intent: Intent) : ListEvent()
-}
-
 class TiersListViewModel(
-    private val tierListRepository: TierListRepository,
+    tierListRepository: TierListRepository,
     private val createNewTierListUseCase: CreateNewTierListUseCase,
     private val deleteTierListUseCase: DeleteTierListUseCase,
     private val exportShareListUseCase: ExportShareListUseCase
@@ -52,7 +36,10 @@ class TiersListViewModel(
         if (tiers.isEmpty()) TiersState.Empty
         else {
             val foundLists = searchLists(tiers, search)
-            TiersState.Success(foundLists)
+            TiersState.Success(
+                tiersList = foundLists,
+                searchEnabled = shouldEnableSearch(listsCount = tiers.size, searchQuery = search)
+            )
         }
     }.stateIn(
         viewModelScope,
@@ -60,15 +47,11 @@ class TiersListViewModel(
         TiersState.Loading
     )
 
-    private val eventChannel = Channel<ListEvent>()
+    private val eventChannel = Channel<ActionEvent>()
     val eventsFlow = eventChannel.receiveAsFlow()
 
     override fun obtainEvent(event: TiersEvent) {
         when (event) {
-            is TiersEvent.ChangeName -> viewModelScope.launch {
-                tierListRepository.changeTierListName(event.tierList, event.newName)
-            }
-
             is TiersEvent.Delete -> viewModelScope.launch {
                 deleteTierListUseCase(event.tierList)
             }
@@ -83,7 +66,7 @@ class TiersListViewModel(
 
             is TiersEvent.ShareList -> viewModelScope.launch {
                 val intent = exportShareListUseCase.invoke(event.listId)
-                eventChannel.send(ListEvent.StartIntent(intent))
+                eventChannel.send(ActionEvent.StartIntent(intent))
             }
         }
     }
@@ -96,6 +79,9 @@ class TiersListViewModel(
         return if (query.isBlank()) lists
         else lists.filter { tier -> tier.list.name.lowercase().contains(queryLower) }
     }
+
+    private fun shouldEnableSearch(listsCount: Int, searchQuery: String): Boolean =
+        listsCount > 1 || searchQuery.isNotBlank()
 
     companion object {
         val Factory = viewModelFactory {

@@ -11,7 +11,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import ru.smalljinn.tiers.data.share.models.ShareList
-import ru.smalljinn.tiers.presentation.navigation.TierNavHost
+import ru.smalljinn.tiers.navigation.TierNavHost
 import ru.smalljinn.tiers.presentation.ui.theme.TiersTheme
 
 private const val TAG = "Intent"
@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
                 TierNavHost()
                 val viewModel: ImportViewModel = viewModel(factory = ImportViewModel.Factory)
                 when {
+                    //TODO make check type file and show message when imported or on error
                     intent?.action == Intent.ACTION_VIEW -> {
                         if (intent.type == "application/octet-stream") {
                             val uriShare = intent.data

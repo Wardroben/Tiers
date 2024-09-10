@@ -29,8 +29,8 @@ class TierCategoryRepositoryImpl(private val categoryDao: CategoryDao) : TierCat
             .map { categoryWithElementsList ->
                 categoryWithElementsList.map { it.getWithSortedElements() }
             }
-        //return categoryDao.getCategoriesWithElementsOfListStream(listId)
     }
 
-
+    override suspend fun unpinElementsFromCategory(categoryId: Long) =
+        categoryDao.unpinElementsOfCategory(categoryId)
 }

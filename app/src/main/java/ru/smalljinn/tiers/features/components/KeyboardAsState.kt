@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.ui.screens.components
+package ru.smalljinn.tiers.features.components
 
 import android.view.ViewTreeObserver
 import androidx.compose.runtime.Composable

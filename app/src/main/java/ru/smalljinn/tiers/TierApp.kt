@@ -18,8 +18,8 @@ import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepositoryImpl
 import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessorImpl
-import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepository
-import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepositoryImpl
+import ru.smalljinn.tiers.data.images.repository.device.DeviceImageRepository
+import ru.smalljinn.tiers.data.images.repository.device.DeviceImageRepositoryImpl
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepositoryImpl
 import ru.smalljinn.tiers.data.images.source.BASE_URL
@@ -28,12 +28,16 @@ import ru.smalljinn.tiers.data.images.source.JSON_FORMAT
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepositoryImpl
 import ru.smalljinn.tiers.data.share.repository.ShareRepositoryImpl
-import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
-import ru.smalljinn.tiers.domain.usecase.CreateShareListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
-import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
-import ru.smalljinn.tiers.domain.usecase.ExportShareListUseCase
 import ru.smalljinn.tiers.domain.usecase.ImportListUseCase
+import ru.smalljinn.tiers.features.tier_edit.InsertElementsUseCase
+import ru.smalljinn.tiers.features.tier_edit.PinElementUseCase
+import ru.smalljinn.tiers.features.tier_edit.RemoveCategoryUseCase
+import ru.smalljinn.tiers.features.tier_edit.UnpinElementsUseCase
+import ru.smalljinn.tiers.features.tier_lists.CreateNewTierListUseCase
+import ru.smalljinn.tiers.features.tier_lists.CreateShareListUseCase
+import ru.smalljinn.tiers.features.tier_lists.DeleteTierListUseCase
+import ru.smalljinn.tiers.features.tier_lists.ExportShareListUseCase
 import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 import ru.smalljinn.tiers.util.network.observer.NetworkConnectivityObserver
 
@@ -66,7 +70,7 @@ class TierApp : Application() {
 }
 
 interface AppContainer {
-    val devicePhotoRepository: DevicePhotoRepository
+    val deviceImageRepository: DeviceImageRepository
     val tierElementRepository: TierElementRepository
     val tierCategoryRepository: TierCategoryRepository
     val tierListRepository: TierListRepository
@@ -78,6 +82,10 @@ interface AppContainer {
     val connectivityObserver: ConnectivityObserver
     val exportShareListUseCase: ExportShareListUseCase
     val importListUseCase: ImportListUseCase
+    val pinElementUseCase: PinElementUseCase
+    val unpinElementsUseCase: UnpinElementsUseCase
+    val removeCategoryUseCase: RemoveCategoryUseCase
+    val insertElementsUseCase: InsertElementsUseCase
 }
 
 private class AppContainerImpl(
@@ -88,8 +96,16 @@ private class AppContainerImpl(
     private val googleSearchApi: GoogleSearchApi,
     private val appContext: Context
 ) : AppContainer {
-    override val devicePhotoRepository: DevicePhotoRepository
-        get() = DevicePhotoRepositoryImpl(photoProcessor)
+    override val insertElementsUseCase: InsertElementsUseCase
+        get() = InsertElementsUseCase(tierElementRepository)
+    override val removeCategoryUseCase: RemoveCategoryUseCase
+        get() = RemoveCategoryUseCase(tierCategoryRepository)
+    override val pinElementUseCase: PinElementUseCase
+        get() = PinElementUseCase(tierElementRepository)
+    override val unpinElementsUseCase: UnpinElementsUseCase
+        get() = UnpinElementsUseCase(tierElementRepository)
+    override val deviceImageRepository: DeviceImageRepository
+        get() = DeviceImageRepositoryImpl(photoProcessor)
     override val tierElementRepository: TierElementRepository
         get() = TierElementRepositoryImpl(tierElementDao)
     override val tierCategoryRepository: TierCategoryRepository
@@ -106,7 +122,7 @@ private class AppContainerImpl(
     override val createNewTierListUseCase: CreateNewTierListUseCase
         get() = CreateNewTierListUseCase(tierListRepository, tierCategoryRepository)
     override val deleteElementsUseCase: DeleteElementsUseCase
-        get() = DeleteElementsUseCase(tierElementRepository, devicePhotoRepository)
+        get() = DeleteElementsUseCase(tierElementRepository, deviceImageRepository)
     override val deleteTierListUseCase: DeleteTierListUseCase
         get() = DeleteTierListUseCase(
             tierElementRepository,

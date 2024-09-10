@@ -1,0 +1,19 @@
+package ru.smalljinn.tiers.features.tier_edit
+
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import ru.smalljinn.tiers.data.database.model.TierCategory
+import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
+
+class RemoveCategoryUseCase(
+    private val categoryRepository: TierCategoryRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
+    suspend operator fun invoke(category: TierCategory) {
+        withContext(dispatcher) {
+            categoryRepository.unpinElementsFromCategory(categoryId = category.id)
+            categoryRepository.deleteCategory(category)
+        }
+    }
+}

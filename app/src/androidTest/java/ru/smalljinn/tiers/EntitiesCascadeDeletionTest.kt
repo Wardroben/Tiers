@@ -19,7 +19,7 @@ import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepositoryImpl
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepositoryImpl
-import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
+import ru.smalljinn.tiers.features.tier_lists.CreateNewTierListUseCase
 
 const val BASE_CATEGORIES_COUNT = 5
 

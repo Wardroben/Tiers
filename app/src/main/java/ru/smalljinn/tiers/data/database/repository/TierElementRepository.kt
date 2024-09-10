@@ -12,4 +12,5 @@ interface TierElementRepository {
     fun getNotAttachedElementsOfListStream(tierListId: Long): Flow<List<TierElement>>
     suspend fun getListElements(listId: Long): List<TierElement>
     suspend fun reorderElements(draggedElementId: Long, targetElementId: Long)
+    suspend fun getLastPositionInCategory(categoryId: Long): Int
 }

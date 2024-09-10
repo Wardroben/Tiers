@@ -39,6 +39,9 @@ interface ElementDao {
     @Query("SELECT position FROM tier_element WHERE element_id = :id")
     suspend fun getElementPosition(id: Long): Int
 
+    @Query("SELECT MAX(position) FROM tier_element WHERE category_id = :categoryId")
+    suspend fun getLastPositionInCategory(categoryId: Long): Int
+
     @Query("")
     suspend fun reorderElements(draggedElementId: Long, targetId: Long) {
         val draggedElement = getElementById(draggedElementId)

@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.navigation
+package ru.smalljinn.tiers.navigation
 
 const val TIERS_LIST_ROUTE = "tiersList"
 

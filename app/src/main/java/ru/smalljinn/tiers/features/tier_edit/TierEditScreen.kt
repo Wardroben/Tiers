@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.ui.screens.edit
+package ru.smalljinn.tiers.features.tier_edit
 
 import android.content.ClipData
 import android.content.ClipDescription
@@ -124,8 +124,8 @@ import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.TierElement
-import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
-import ru.smalljinn.tiers.presentation.ui.screens.components.keyboardAsState
+import ru.smalljinn.tiers.features.components.TextOnColor
+import ru.smalljinn.tiers.features.components.keyboardAsState
 import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
@@ -214,6 +214,7 @@ fun TierEditScreen(
                     category = uiState.sheetState.newCategory,
                     onSaveClicked = { viewModel.obtainEvent(EditEvent.EditCategory(it)) },
                     onDeleteClicked = { viewModel.obtainEvent(EditEvent.RemoveCategory(it)) },
+                    isCategoryCreation = true,
                     sheetState = sheetState
                 )
 
@@ -856,6 +857,7 @@ fun CategoryModalBottomSheet(
     category: TierCategory,
     onSaveClicked: (TierCategory) -> Unit,
     onDeleteClicked: (TierCategory) -> Unit,
+    isCategoryCreation: Boolean = false,
     sheetState: androidx.compose.material3.SheetState,
 ) {
     var name by rememberSaveable { mutableStateOf(category.name) }
@@ -888,11 +890,13 @@ fun CategoryModalBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 //Delete button
-                IconButton(onClick = { onDeleteClicked(category) }) {
-                    Icon(
-                        imageVector = Icons.Outlined.Delete,
-                        contentDescription = "Delete category ${category.name}"
-                    )
+                AnimatedVisibility(visible = !isCategoryCreation) {
+                    IconButton(onClick = { onDeleteClicked(category) }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete category ${category.name}"
+                        )
+                    }
                 }
                 //Save button
                 Button(

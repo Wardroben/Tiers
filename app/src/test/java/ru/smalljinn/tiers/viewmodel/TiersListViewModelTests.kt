@@ -15,13 +15,13 @@ import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
-import ru.smalljinn.tiers.domain.usecase.CreateNewTierListUseCase
-import ru.smalljinn.tiers.domain.usecase.CreateShareListUseCase
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
-import ru.smalljinn.tiers.domain.usecase.DeleteTierListUseCase
-import ru.smalljinn.tiers.domain.usecase.ExportShareListUseCase
-import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersListViewModel
-import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersState
+import ru.smalljinn.tiers.features.tier_lists.CreateNewTierListUseCase
+import ru.smalljinn.tiers.features.tier_lists.CreateShareListUseCase
+import ru.smalljinn.tiers.features.tier_lists.DeleteTierListUseCase
+import ru.smalljinn.tiers.features.tier_lists.ExportShareListUseCase
+import ru.smalljinn.tiers.features.tier_lists.TiersListViewModel
+import ru.smalljinn.tiers.features.tier_lists.TiersState
 import java.io.IOException
 
 class TiersListViewModelTests {
@@ -36,7 +36,7 @@ class TiersListViewModelTests {
         categoryRepository = MockCategoryRepositoryImpl()
         tierRepository = MockTiersListRepository()
         val elementRepository = MockElementRepository()
-        val photoRepository = MockPhotoRepository()
+        val photoRepository = MockImageRepository()
         val deleteElementsUseCase = DeleteElementsUseCase(elementRepository, photoRepository)
         val deleteTierListUseCase =
             DeleteTierListUseCase(elementRepository, deleteElementsUseCase, tierRepository)

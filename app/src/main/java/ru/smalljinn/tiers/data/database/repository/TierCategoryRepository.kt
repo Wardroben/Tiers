@@ -10,4 +10,5 @@ interface TierCategoryRepository {
     suspend fun deleteCategory(category: TierCategory)
     fun getCategoriesWithElementsStream(): Flow<List<TierCategoryWithElements>>
     fun getCategoriesWithElementsOfListStream(listId: Long): Flow<List<TierCategoryWithElements>>
+    suspend fun unpinElementsFromCategory(categoryId: Long)
 }

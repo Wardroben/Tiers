@@ -1,6 +1,5 @@
-package ru.smalljinn.tiers.presentation.ui.screens.edit
+package ru.smalljinn.tiers.features.tier_edit
 
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -17,64 +16,20 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.TierApp
 import ru.smalljinn.tiers.data.database.model.TierCategory
-import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.data.database.model.TierList
-import ru.smalljinn.tiers.data.database.model.unpin
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
-import ru.smalljinn.tiers.data.images.repository.device.DevicePhotoRepository
+import ru.smalljinn.tiers.data.images.repository.device.DeviceImageRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.preferences.model.UserSettings
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
-import ru.smalljinn.tiers.presentation.navigation.EDIT_TIER_NAV_ARGUMENT
+import ru.smalljinn.tiers.navigation.EDIT_TIER_NAV_ARGUMENT
 import ru.smalljinn.tiers.util.EventHandler
 import ru.smalljinn.tiers.util.Result
 import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
-
-private const val TIER_LIST_UNTITLED_NAME = "Untitled"
-
-sealed class SheetAction {
-    data object Init : SheetAction()
-    data object Hide : SheetAction()
-    data class EditCategory(val category: TierCategory) : SheetAction()
-    data class CreateCategory(val newCategory: TierCategory) : SheetAction()
-    data object SearchImages : SheetAction()
-}
-
-
-sealed class SheetState {
-    data object Hidden : SheetState()
-    data class CategoryCreation(val newCategory: TierCategory) : SheetState()
-    data class CategoryEditing(val category: TierCategory) : SheetState()
-    data class SearchImages(
-        val query: String,
-        val images: List<String>,
-        val loading: Boolean,
-        val errorMessage: String? = null
-    ) : SheetState()
-}
-
-@Immutable
-data class EditUiState(
-    val notAttachedElements: List<TierElement> = emptyList(),
-    val categoriesWithElements: List<TierCategoryWithElements> = emptyList(),
-    val tierListName: String = TIER_LIST_UNTITLED_NAME,
-    val isPhotoProcessing: Boolean = false,
-    val sheetState: SheetState = SheetState.Hidden
-) {
-    val lastCategoryIndex = categoriesWithElements.lastIndex
-}
-
-@Immutable
-data class ImageSearchState(
-    val searchQuery: String = "",
-    val images: List<String> = emptyList(),
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)
 
 /**
  * Set categoryId to null for all elements to unpin them
@@ -83,14 +38,18 @@ private fun List<TierElement>.unpinElements() =
     this.map { element -> element.copy(categoryId = null) }
 
 class TierEditViewModel(
-    private val devicePhotoRepository: DevicePhotoRepository,
+    private val deviceImageRepository: DeviceImageRepository,
     private val categoryRepository: TierCategoryRepository,
     private val elementRepository: TierElementRepository,
     private val listRepository: TierListRepository,
-    private val deleteElementsUseCase: DeleteElementsUseCase,
-    private val savedStateHandle: SavedStateHandle,
     private val networkImageRepository: NetworkImageRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val deleteElementsUseCase: DeleteElementsUseCase,
+    private val insertElementsUseCase: InsertElementsUseCase,
+    private val unpinElementsUseCase: UnpinElementsUseCase,
+    private val pinElementUseCase: PinElementUseCase,
+    private val removeCategoryUseCase: RemoveCategoryUseCase,
+    private val savedStateHandle: SavedStateHandle,
     connectivityObserver: ConnectivityObserver
 ) : ViewModel(), EventHandler<EditEvent> {
     private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
@@ -129,7 +88,7 @@ class TierEditViewModel(
         }
     }
 
-    private val photoProcessing = devicePhotoRepository.imageProcessingStream
+    private val photoProcessing = deviceImageRepository.imageProcessingStream
 
     val uiState: StateFlow<EditUiState> =
         combine(
@@ -165,15 +124,15 @@ class TierEditViewModel(
 
             is EditEvent.RemoveCategory -> {
                 sheetAction.update { SheetAction.Hide }
-                val tierCategoryWithElements =
+                viewModelScope.launch { removeCategoryUseCase(event.tierCategory) }
+                /*val tierCategoryWithElements =
                     uiState.value.categoriesWithElements.find { categoryWithElements ->
                         event.tierCategory == categoryWithElements.category
                     } ?: return
                 viewModelScope.launch {
                     elementRepository.insertTierElements(tierCategoryWithElements.elements.unpinElements())
                     categoryRepository.deleteCategory(event.tierCategory)
-                }
-                sheetAction.update { SheetAction.Hide }
+                }*/
             }
 
             is EditEvent.ChangeTierName -> {
@@ -185,7 +144,6 @@ class TierEditViewModel(
 
             is EditEvent.EditCategory -> {
                 sheetAction.update { SheetAction.Hide }
-                //sheetState.update { SheetState.Hidden }
                 viewModelScope.launch {
                     categoryRepository.insertCategory(event.tierCategory)
                 }
@@ -195,11 +153,13 @@ class TierEditViewModel(
             is EditEvent.RemoveElement -> viewModelScope.launch {
                 val elementToDelete = elementRepository.getElementById(event.elementId)
                 deleteElementsUseCase(elementToDelete)
-                //elementRepository.deleteTierElement(event.tierElement)
             }
 
             is EditEvent.UnpinElementFromCategory -> {
-                val elementInUnpinnedList =
+                viewModelScope.launch {
+                    unpinElementsUseCase(event.elementId)
+                }
+                /*val elementInUnpinnedList =
                     uiState.value.notAttachedElements.find { element ->
                         element.elementId == event.elementId
                     }
@@ -207,14 +167,17 @@ class TierEditViewModel(
                 viewModelScope.launch {
                     val elementIdToUnpin = elementRepository.getElementById(event.elementId)
                     elementRepository.insertTierElement(elementIdToUnpin.unpin())
-                }
+                }*/
             }
 
             is EditEvent.AttachElementToCategory -> {
-                val category =
+                viewModelScope.launch {
+                    pinElementUseCase(categoryId = event.categoryId, elementId = event.elementId)
+                }
+                /*val category =
                     uiState.value.categoriesWithElements.find { it.category.id == event.categoryId }
                         ?: return
-                val position = category.elements.lastOrNull()?.position?.let { it + 1 } ?: 0
+                val lastElementPosition = category.elements.lastOrNull()?.position ?: 0
                 viewModelScope.launch {
                     val element = elementRepository.getElementById(event.elementId)
                     if (element in category.elements) return@launch
@@ -222,27 +185,20 @@ class TierEditViewModel(
                         elementRepository.insertTierElement(
                             element.copy(
                                 categoryId = categoryId,
-                                position = position
+                                position = lastElementPosition + 1
                             )
                         )
                     }
-                }
+                }*/
             }
 
             is EditEvent.AddImages -> viewModelScope.launch {
-                val addedImageUris = devicePhotoRepository.insertPhotos(event.images)
-                val tierElementsToAdd = addedImageUris.map { uri ->
-                    TierElement(
-                        tierListId = currentListId,
-                        imageUrl = uri.toString()
-                    )
-                }
-                elementRepository.insertTierElements(tierElementsToAdd)
+                val addedImageUris = deviceImageRepository.insertPhotos(event.images)
+                insertElementsUseCase(currentListId, addedImageUris)
             }
 
             is EditEvent.SelectCategory -> {
                 sheetAction.update { SheetAction.EditCategory(event.tierCategory) }
-                //sheetState.update { SheetState.CategoryEditing(event.tierCategory) }
             }
 
             is EditEvent.HideSheet -> sheetAction.update { SheetAction.Hide }
@@ -258,7 +214,6 @@ class TierEditViewModel(
 
             is EditEvent.SearchEdited -> {
                 searchStateStream.update { it.copy(searchQuery = event.query) }
-                //searchQuery = event.query
             }
 
             is EditEvent.SaveInternetImage -> viewModelScope.launch {
@@ -266,25 +221,24 @@ class TierEditViewModel(
                 resultStream.collect { result ->
                     when (result) {
                         is Result.Error -> searchStateStream.update { it.copy(errorMessage = result.message) }
-                        is Result.Loading -> searchStateStream.update { it.copy(isLoading = result.isLoading) }//imagesLoading.update { result.isLoading }
-                        is Result.Success -> {
-                            searchStateStream.update { it.copy(errorMessage = null) }
-                            elementRepository.insertTierElement(
-                                TierElement(
-                                    tierListId = currentListId,
-                                    imageUrl = result.data.toString()
-                                )
+                        is Result.Loading -> searchStateStream.update {
+                            it.copy(
+                                isLoading = result.isLoading,
+                                errorMessage = null
                             )
+                        }
+
+                        is Result.Success -> {
+                            //TODO result.data!!
+                            insertElementsUseCase(currentListId, result.data!!)
                             val imageToRemove =
                                 searchStateStream.value.images.elementAt(event.index)
                             searchStateStream.update { state ->
                                 state.copy(
-                                    images = state.images.minus(
-                                        imageToRemove
-                                    )
+                                    images = state.images.minus(imageToRemove),
+                                    errorMessage = null
                                 )
                             }
-                            //imagesFromSearch.update { it.minus(imageToRemove) }
                         }
                     }
                 }
@@ -297,14 +251,11 @@ class TierEditViewModel(
                     imagesStream.collect { result ->
                         when (result) {
                             is Result.Error -> searchStateStream.update { it.copy(errorMessage = result.message) }
-                            is Result.Loading -> searchStateStream.update { it.copy(isLoading = result.isLoading) }//imagesLoading.update { result.isLoading }
-                            is Result.Success -> searchStateStream.update { state ->
-                                state.copy(images = result.data?.map { it.thumbnailLink }
+                            is Result.Loading -> searchStateStream.update { it.copy(isLoading = result.isLoading) }
+                            is Result.Success -> searchStateStream.update { searchState ->
+                                searchState.copy(images = result.data?.map { it.thumbnailLink }
                                     ?: emptyList(), errorMessage = null)
                             }
-                            /*imagesFromSearch.update {
-                            result.data?.map { it.thumbnailLink } ?: emptyList()
-                        }*/
                         }
                     }
                 }
@@ -312,7 +263,6 @@ class TierEditViewModel(
 
             is EditEvent.OpenSearchSheet -> {
                 sheetAction.update { SheetAction.SearchImages }
-                //sheetState.update { SheetState.SearchImages("", emptyList()) }
             }
         }
     }
@@ -330,11 +280,15 @@ class TierEditViewModel(
                     categoryRepository = categoryRepo,
                     listRepository = listRepo,
                     elementRepository = elementRepo,
-                    devicePhotoRepository = appContainer.devicePhotoRepository,
+                    deviceImageRepository = appContainer.deviceImageRepository,
                     deleteElementsUseCase = deleteElementsUseCase,
                     networkImageRepository = networkImageRepository,
                     preferencesRepository = appContainer.preferencesRepository,
                     connectivityObserver = appContainer.connectivityObserver,
+                    pinElementUseCase = appContainer.pinElementUseCase,
+                    unpinElementsUseCase = appContainer.unpinElementsUseCase,
+                    removeCategoryUseCase = appContainer.removeCategoryUseCase,
+                    insertElementsUseCase = appContainer.insertElementsUseCase,
                     savedStateHandle = createSavedStateHandle()
                 )
             }

@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.navigation
+package ru.smalljinn.tiers.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.Spring
@@ -11,9 +11,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import ru.smalljinn.tiers.presentation.ui.screens.edit.TierEditScreen
-import ru.smalljinn.tiers.presentation.ui.screens.settings.SettingsScreen
-import ru.smalljinn.tiers.presentation.ui.screens.tierslist.TiersListScreen
+import ru.smalljinn.tiers.features.app_settings.SettingsScreen
+import ru.smalljinn.tiers.features.tier_edit.TierEditScreen
+import ru.smalljinn.tiers.features.tier_lists.TiersListScreen
 
 @Composable
 fun TierNavHost(

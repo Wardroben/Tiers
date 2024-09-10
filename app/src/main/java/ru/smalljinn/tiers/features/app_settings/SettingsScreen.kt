@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.ui.screens.settings
+package ru.smalljinn.tiers.features.app_settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement

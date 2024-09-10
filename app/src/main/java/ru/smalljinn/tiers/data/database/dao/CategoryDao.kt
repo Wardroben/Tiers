@@ -22,6 +22,9 @@ interface CategoryDao {
     @Delete
     suspend fun deleteCategory(category: TierCategory)
 
+    @Query("UPDATE tier_element SET category_id = null, position = 0 WHERE category_id = :categoryId")
+    suspend fun unpinElementsOfCategory(categoryId: Long)
+
     @Transaction
     @Query("SELECT * FROM tier_category ORDER BY position ASC")
     fun getCategoriesWithElementsStream(): Flow<List<TierCategoryWithElements>>

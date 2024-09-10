@@ -6,6 +6,7 @@ import ru.smalljinn.tiers.data.database.dao.ElementDao
 import ru.smalljinn.tiers.data.database.model.TierElement
 
 private const val TAG = "ElementRepository"
+
 class TierElementRepositoryImpl(private val elementDao: ElementDao) : TierElementRepository {
     override suspend fun getElementById(elementId: Long): TierElement {
         return elementDao.getElementById(elementId)
@@ -39,4 +40,7 @@ class TierElementRepositoryImpl(private val elementDao: ElementDao) : TierElemen
     override suspend fun reorderElements(draggedElementId: Long, targetElementId: Long) {
         return elementDao.reorderElements(draggedElementId, targetElementId)
     }
+
+    override suspend fun getLastPositionInCategory(categoryId: Long): Int =
+        elementDao.getLastPositionInCategory(categoryId)
 }

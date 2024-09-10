@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.ui.screens.components
+package ru.smalljinn.tiers.features.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

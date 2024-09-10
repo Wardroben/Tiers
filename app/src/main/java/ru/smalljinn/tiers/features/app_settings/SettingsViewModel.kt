@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation.ui.screens.settings
+package ru.smalljinn.tiers.features.app_settings
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,31 +21,20 @@ import ru.smalljinn.tiers.util.EventHandler
 const val CX_REGEX = "^[A-Z0-9]+$"
 const val API_REGEX = "^[A-Z0-9-+/|]+$"
 
-data class SettingsUiState(
-    val apiKey: String = "",
-    val cx: String = "",
-    val apiError: Boolean = apiKey.isBlank()
-            || apiKey.length != 39
-            || !apiKey.contains(API_REGEX.toRegex(RegexOption.IGNORE_CASE)),
-    val cxError: Boolean = cx.isBlank()
-            || cx.length != 17
-            || !cx.contains(CX_REGEX.toRegex(RegexOption.IGNORE_CASE)),
-    val vibrationEnabled: Boolean = true
-)
-
 class SettingsViewModel(
     private val preferencesRepository: PreferencesRepository
 ) : ViewModel(), EventHandler<SettingsEvent> {
     init {
         viewModelScope.launch {
-            val stream = preferencesRepository.getSettingsStream().first()
-            apiKey = stream.googleApiKey
-            cx = stream.cx
+            val userSettings = preferencesRepository.getSettingsStream().first()
+            apiKey = userSettings.googleApiKey
+            cx = userSettings.cx
         }
     }
 
     private var apiKey by mutableStateOf("")
     private var cx by mutableStateOf("")
+
     val settingsStream = combine(
         snapshotFlow { apiKey },
         snapshotFlow { cx },

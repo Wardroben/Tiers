@@ -1,6 +1,5 @@
-package ru.smalljinn.tiers.presentation.ui.screens.tierslist
+package ru.smalljinn.tiers.features.tier_lists
 
-import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -79,7 +78,7 @@ import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
-import ru.smalljinn.tiers.presentation.ui.screens.components.TextOnColor
+import ru.smalljinn.tiers.features.components.TextOnColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,6 +91,7 @@ fun TiersListScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+
     val tiersScrollState = rememberLazyListState()
     val createNewTierList =
         { viewModel.obtainEvent(TiersEvent.CreateNew(name = context.getString(R.string.untitled_tierlist_name))) }
@@ -102,22 +102,17 @@ fun TiersListScreen(
     }
     val scrollToTop = { scope.launch { tiersScrollState.animateScrollToItem(0) } }
 
+    //TODO safe channel handling
     LaunchedEffect(key1 = Unit) {
         viewModel.eventsFlow.collectLatest { event ->
             when (event) {
-                is ListEvent.StartIntent -> {
-                    val intent = Intent().apply {
-                        setAction(Intent.ACTION_SEND)
-                        putExtra(Intent.EXTRA_TEXT, "Aboba")
-                        putExtra(Intent.EXTRA_TITLE, "Theme")
-                        setType("*/*")
-                    }
+                is ActionEvent.StartIntent -> {
                     context.startActivity(event.intent)
                 }
             }
         }
     }
-    
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -207,7 +202,8 @@ fun TiersListBody(
             onSearchChanged = onSearchChanged,
             searchQuery = searchQuery,
             onTierListClicked = onTierListClicked,
-            onShareTierClicked = onShareTierClicked
+            onShareTierClicked = onShareTierClicked,
+            searchEnabled = uiState.searchEnabled
         )
     }
 }
@@ -221,6 +217,7 @@ fun TiersColumn(
     onDeleteTierClicked: (TierList) -> Unit,
     onClearSearchQuery: () -> Unit,
     onSearchChanged: (String) -> Unit,
+    searchEnabled: Boolean,
     searchQuery: String,
     tiersListState: LazyListState = rememberLazyListState(),
     onTierListClicked: (TierList) -> Unit,
@@ -235,7 +232,7 @@ fun TiersColumn(
     ) {
         item {
             SearchElement(
-                enabled = tiersList.size > 1 || searchQuery.isNotBlank(),
+                enabled = searchEnabled,
                 onClearSearchQuery = onClearSearchQuery,
                 onTextChanged = onSearchChanged,
                 searchQuery = searchQuery

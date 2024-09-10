@@ -4,9 +4,9 @@ import android.net.Uri
 import kotlinx.coroutines.flow.MutableStateFlow
 import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 
-class DevicePhotoRepositoryImpl(
+class DeviceImageRepositoryImpl(
     private val photoProcessor: PhotoProcessor
-) : DevicePhotoRepository {
+) : DeviceImageRepository {
     override val imageProcessingStream: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override suspend fun insertPhotos(uris: List<Uri>): List<Uri> {
         imageProcessingStream.emit(true)
@@ -16,6 +16,9 @@ class DevicePhotoRepositoryImpl(
     }
 
     override suspend fun deletePhotos(uris: List<Uri>): Boolean {
-        return photoProcessor.deleteImagesFromDevice(uris)
+        imageProcessingStream.emit(true)
+        val isPhotosDeleted = photoProcessor.deleteImagesFromDevice(uris)
+        imageProcessingStream.emit(true)
+        return isPhotosDeleted
     }
 }

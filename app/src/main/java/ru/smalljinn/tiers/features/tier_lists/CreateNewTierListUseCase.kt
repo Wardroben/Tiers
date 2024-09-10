@@ -1,8 +1,9 @@
-package ru.smalljinn.tiers.domain.usecase
+package ru.smalljinn.tiers.features.tier_lists
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
@@ -13,8 +14,7 @@ class CreateNewTierListUseCase(
     private val tierCategoryRepository: TierCategoryRepository,
 ) {
     suspend operator fun invoke(name: String): Long {
-        return coroutineScope {
-            //TODO adding list of categories to prevent recompositions
+        return withContext(Dispatchers.IO) {
             val tierListId = tierListRepository.insertTierList(TierList(name = name))
             val categoriesToAdd = mutableListOf<TierCategory>()
             categoriesToAdd.add(

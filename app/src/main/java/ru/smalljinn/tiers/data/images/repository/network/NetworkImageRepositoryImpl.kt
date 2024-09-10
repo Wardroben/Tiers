@@ -11,8 +11,8 @@ import ru.smalljinn.tiers.data.images.model.Image
 import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 import ru.smalljinn.tiers.data.images.source.GoogleSearchApi
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
-import ru.smalljinn.tiers.presentation.ui.screens.settings.API_REGEX
-import ru.smalljinn.tiers.presentation.ui.screens.settings.CX_REGEX
+import ru.smalljinn.tiers.features.app_settings.API_REGEX
+import ru.smalljinn.tiers.features.app_settings.CX_REGEX
 import ru.smalljinn.tiers.util.Result
 import java.io.IOException
 

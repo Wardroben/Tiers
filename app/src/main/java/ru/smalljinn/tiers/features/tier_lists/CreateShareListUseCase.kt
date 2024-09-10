@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.domain.usecase
+package ru.smalljinn.tiers.features.tier_lists
 
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
