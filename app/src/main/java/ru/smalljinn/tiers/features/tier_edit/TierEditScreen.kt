@@ -49,10 +49,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text2.BasicTextField2
-import androidx.compose.foundation.text2.input.TextFieldLineLimits
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
@@ -286,12 +285,11 @@ fun TierEditScreen(
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
 private fun EditableTierName(
     listName: String,
     onNameChanged: (String) -> Unit,
 ) {
-    BasicTextField2(
+    BasicTextField(
         value = listName,
         onValueChange = onNameChanged,
         textStyle = MaterialTheme.typography.titleLarge.copy(color = LocalContentColor.current),
@@ -299,7 +297,7 @@ private fun EditableTierName(
             capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done
         ),
-        lineLimits = TextFieldLineLimits.SingleLine,
+        singleLine = true,
         cursorBrush = SolidColor(LocalContentColor.current),
         modifier = Modifier
             .fillMaxWidth()

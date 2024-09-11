@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.serialization)
     alias(libs.plugins.kapt)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -56,7 +57,7 @@ android {
         buildConfig = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
     packaging {
         resources {
@@ -70,7 +71,8 @@ kapt {
 }
 
 dependencies {
-    implementation(libs.androidx.viewmodel.lifecycle)
+
+implementation(libs.androidx.viewmodel.lifecycle)
     implementation(libs.coil)
     //implementation(libs.glide)
 
