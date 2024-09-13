@@ -200,7 +200,8 @@ fun TierEditScreen(
         LaunchedEffect(key1 = uiState.sheetState) {
             when (uiState.sheetState) {
                 SheetState.Hidden -> {
-                    scope.launch { sheetState.hide() }.invokeOnCompletion { sheetVisible = false }
+                    scope.launch { sheetState.hide() }
+                    sheetVisible = false
                 }
 
                 else -> sheetVisible = true
@@ -327,7 +328,7 @@ fun TierEditBody(
             onReorderElements = onReorderElements,
             vibrationEnabled = vibrationEnabled
         )
-        NotAttachedImages(
+        UnpinnedImages(
             images = notAttachedElements,
             onAddImageClicked = onAddImageClicked,
             onDeleteItemDropped = onDeleteItemDropped,
@@ -338,7 +339,7 @@ fun TierEditBody(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NotAttachedImages(
+fun UnpinnedImages(
     modifier: Modifier = Modifier,
     images: List<TierElement>,
     onAddImageClicked: () -> Unit,
@@ -396,8 +397,8 @@ fun NotAttachedImages(
                 modifier = Modifier
                     .animateItem()
                     .sizeIn(
-                        minWidth = imageSize,
-                        maxHeight = imageSize,
+                        minWidth = imageSize - 1.dp,
+                        maxHeight = imageSize + 1.dp,
                         minHeight = imageSize - 1.dp,
                         maxWidth = imageSize + 1.dp
                     )
@@ -790,6 +791,7 @@ fun GoogleImageModalBottomSheet(
             ) {
                 itemsIndexed(items = images, key = { _, url -> url }) { index, url ->
                     val request = ImageRequest.Builder(context = context)
+                        .allowHardware(false)
                         .data(url)
                         .crossfade(true)
                         .build()
@@ -918,6 +920,7 @@ fun ElementImage(modifier: Modifier = Modifier, imageUrl: String) {
     val context = LocalContext.current
     AsyncImage(
         model = ImageRequest.Builder(context)
+            .allowHardware(false)
             .data(imageUrl)
             .crossfade(false)
             .build(),

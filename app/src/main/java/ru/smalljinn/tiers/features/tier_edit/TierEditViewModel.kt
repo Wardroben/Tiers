@@ -1,5 +1,9 @@
 package ru.smalljinn.tiers.features.tier_edit
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -56,17 +61,16 @@ class TierEditViewModel @Inject constructor(
     private val categoriesWithElementsStream =
         categoryRepository.getCategoriesWithElementsOfListStream(currentListId)
 
-    private val sheetAction = MutableStateFlow<SheetAction>(SheetAction.Init)
-    private val searchStateStream = MutableStateFlow(ImageSearchState())
-
     val connectionStatusStream = connectivityObserver.observe()
-
     val settingsStream = preferencesRepository.getSettingsStream()
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000L),
             initialValue = UserSettings()
         )
+
+    private val sheetAction = MutableStateFlow<SheetAction>(SheetAction.Init)
+    private val searchStateStream = MutableStateFlow(ImageSearchState())
 
     private val sheetUiState = combine(sheetAction, searchStateStream) { action, state ->
         when (action) {
@@ -85,13 +89,14 @@ class TierEditViewModel @Inject constructor(
 
     private val photoProcessing = deviceImageRepository.imageProcessingStream
 
+    private var listName by mutableStateOf("")
     val uiState: StateFlow<EditUiState> =
         combine(
             categoriesWithElementsStream,
             notAttachedElements,
             photoProcessing,
             sheetUiState,
-            tierListNameStream,
+            snapshotFlow { listName },
         ) { categoriesWithElements, elements, isPhotoProcessing, sheetState, listName ->
             EditUiState(
                 notAttachedElements = elements,
@@ -106,6 +111,11 @@ class TierEditViewModel @Inject constructor(
             EditUiState()
         )
 
+    init {
+        viewModelScope.launch {
+            listName = tierListNameStream.first()
+        }
+    }
     override fun obtainEvent(event: EditEvent) {
         when (event) {
             EditEvent.CreateNewCategory -> sheetAction.update {
@@ -123,17 +133,17 @@ class TierEditViewModel @Inject constructor(
             }
 
             is EditEvent.ChangeTierName -> {
-                if (event.name.isBlank()) return
+                listName = event.name
                 viewModelScope.launch {
                     listRepository.insertTierList(TierList(id = currentListId, event.name))
                 }
             }
 
             is EditEvent.EditCategory -> {
+                sheetAction.update { SheetAction.Hide }
                 viewModelScope.launch {
                     categoryRepository.insertCategory(event.tierCategory)
                 }
-                sheetAction.update { SheetAction.Hide }
             }
 
 
