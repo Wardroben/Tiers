@@ -31,8 +31,3 @@ data class TierElement(
     @ColumnInfo(name = "image_url") val imageUrl: String,
     val position: Int = 0 //position in list. Null means that element not assigned to category elementId ???
 )
-
-/**
- * Sets null categoryId and position to zero to unpin element from category
- */
-fun TierElement.unpin() = this.copy(categoryId = null, position = 0)

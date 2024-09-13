@@ -84,11 +84,7 @@ class PhotoProcessorImpl @Inject constructor(
         try {
             FileOutputStream(imageFile).use { stream ->
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    bitmap.compress(CompressFormat.WEBP_LOSSLESS, 0, stream)
-                } else {
-                    bitmap.compress(CompressFormat.JPEG, 100, stream)
-                }
+                bitmap.compress(CompressFormat.PNG, 0, stream)
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -129,7 +125,7 @@ class PhotoProcessorImpl @Inject constructor(
                 this@with,
                 scaledWidth,
                 scaledHeight,
-                false
+                true
             )
             return scaledBitmap
         }
@@ -143,9 +139,9 @@ class PhotoProcessorImpl @Inject constructor(
         try {
             FileOutputStream(imageFile).use { outputStream ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    bitmap.compress(CompressFormat.WEBP_LOSSY, 50, outputStream)
+                    bitmap.compress(CompressFormat.WEBP_LOSSY, 30, outputStream)
                 } else {
-                    bitmap.compress(CompressFormat.JPEG, 65, outputStream)
+                    bitmap.compress(CompressFormat.JPEG, 50, outputStream)
                 }
             }
         } catch (e: IOException) {

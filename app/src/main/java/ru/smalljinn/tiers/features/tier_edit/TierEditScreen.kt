@@ -394,7 +394,7 @@ fun NotAttachedImages(
             ElementImage(
                 imageUrl = element.imageUrl,
                 modifier = Modifier
-                    .animateItemPlacement()
+                    .animateItem()
                     .sizeIn(
                         minWidth = imageSize,
                         maxHeight = imageSize,
@@ -420,7 +420,6 @@ fun NotAttachedImages(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CategoriesList(
     modifier: Modifier = Modifier,
@@ -438,7 +437,7 @@ fun CategoriesList(
     ) {
         items(items = categories, key = { it.category.id }) { categoryWithElements ->
             CategoryItem(
-                modifier = Modifier.animateItemPlacement(),
+                modifier = Modifier.animateItem(),
                 categoryWithElements = categoryWithElements,
                 onCategoryClicked = { onCategoryClicked(categoryWithElements.category) },
                 onTierElementDropped = onTierElementDropped,
@@ -454,7 +453,7 @@ fun CategoriesList(
 fun CategoryItem(
     modifier: Modifier = Modifier,
     categoryWithElements: TierCategoryWithElements,
-    onCategoryClicked: () -> Unit,
+    onCategoryClicked: (TierCategory) -> Unit,
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
     onReorderElements: (firstId: Long, secondId: Long) -> Unit,
     vibrationEnabled: Boolean
@@ -701,14 +700,14 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onAddClicked
 private fun TierCategoryInfo(
     modifier: Modifier = Modifier,
     category: TierCategory,
-    onClick: () -> Unit
+    onClick: (TierCategory) -> Unit
 ) {
     val categorySize = dimensionResource(id = R.dimen.image_category_size)
     Box(
         modifier = modifier
             .width(categorySize)
             .background(category.color)
-            .clickable { onClick() },
+            .clickable { onClick(category) },
         contentAlignment = Alignment.Center
     ) {
         //TODO resizable text
@@ -717,7 +716,7 @@ private fun TierCategoryInfo(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoogleImageModalBottomSheet(
     modifier: Modifier = Modifier,
@@ -799,7 +798,7 @@ fun GoogleImageModalBottomSheet(
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .animateItemPlacement()
+                            .animateItem()
                             .sizeIn(
                                 minHeight = minImageSize,
                                 minWidth = minImageSize,

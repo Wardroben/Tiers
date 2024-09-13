@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.features.tier_edit
+package ru.smalljinn.tiers.features.tier_edit.usecase
 
 import android.net.Uri
 import kotlinx.coroutines.CoroutineDispatcher

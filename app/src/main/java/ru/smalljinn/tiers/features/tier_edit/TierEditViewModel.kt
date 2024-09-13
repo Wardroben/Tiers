@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.data.database.model.TierCategory
-import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
@@ -22,17 +21,15 @@ import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.preferences.model.UserSettings
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
+import ru.smalljinn.tiers.features.tier_edit.usecase.InsertElementsUseCase
+import ru.smalljinn.tiers.features.tier_edit.usecase.PinElementUseCase
+import ru.smalljinn.tiers.features.tier_edit.usecase.RemoveCategoryUseCase
+import ru.smalljinn.tiers.features.tier_edit.usecase.UnpinElementsUseCase
 import ru.smalljinn.tiers.navigation.EDIT_TIER_NAV_ARGUMENT
 import ru.smalljinn.tiers.util.EventHandler
 import ru.smalljinn.tiers.util.Result
 import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 import javax.inject.Inject
-
-/**
- * Set categoryId to null for all elements to unpin them
- */
-private fun List<TierElement>.unpinElements() =
-    this.map { element -> element.copy(categoryId = null) }
 
 @HiltViewModel
 class TierEditViewModel @Inject constructor(
@@ -123,14 +120,6 @@ class TierEditViewModel @Inject constructor(
             is EditEvent.RemoveCategory -> {
                 sheetAction.update { SheetAction.Hide }
                 viewModelScope.launch { removeCategoryUseCase(event.tierCategory) }
-                /*val tierCategoryWithElements =
-                    uiState.value.categoriesWithElements.find { categoryWithElements ->
-                        event.tierCategory == categoryWithElements.category
-                    } ?: return
-                viewModelScope.launch {
-                    elementRepository.insertTierElements(tierCategoryWithElements.elements.unpinElements())
-                    categoryRepository.deleteCategory(event.tierCategory)
-                }*/
             }
 
             is EditEvent.ChangeTierName -> {
@@ -141,10 +130,10 @@ class TierEditViewModel @Inject constructor(
             }
 
             is EditEvent.EditCategory -> {
-                sheetAction.update { SheetAction.Hide }
                 viewModelScope.launch {
                     categoryRepository.insertCategory(event.tierCategory)
                 }
+                sheetAction.update { SheetAction.Hide }
             }
 
 
@@ -157,37 +146,12 @@ class TierEditViewModel @Inject constructor(
                 viewModelScope.launch {
                     unpinElementsUseCase(event.elementId)
                 }
-                /*val elementInUnpinnedList =
-                    uiState.value.notAttachedElements.find { element ->
-                        element.elementId == event.elementId
-                    }
-                if (elementInUnpinnedList != null) return
-                viewModelScope.launch {
-                    val elementIdToUnpin = elementRepository.getElementById(event.elementId)
-                    elementRepository.insertTierElement(elementIdToUnpin.unpin())
-                }*/
             }
 
             is EditEvent.AttachElementToCategory -> {
                 viewModelScope.launch {
                     pinElementUseCase(categoryId = event.categoryId, elementId = event.elementId)
                 }
-                /*val category =
-                    uiState.value.categoriesWithElements.find { it.category.id == event.categoryId }
-                        ?: return
-                val lastElementPosition = category.elements.lastOrNull()?.position ?: 0
-                viewModelScope.launch {
-                    val element = elementRepository.getElementById(event.elementId)
-                    if (element in category.elements) return@launch
-                    with(event) {
-                        elementRepository.insertTierElement(
-                            element.copy(
-                                categoryId = categoryId,
-                                position = lastElementPosition + 1
-                            )
-                        )
-                    }
-                }*/
             }
 
             is EditEvent.AddImages -> viewModelScope.launch {

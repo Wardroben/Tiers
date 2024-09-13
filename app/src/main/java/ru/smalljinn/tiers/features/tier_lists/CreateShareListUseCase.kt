@@ -4,16 +4,13 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import ru.smalljinn.tiers.data.database.model.TierElement
 import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 import ru.smalljinn.tiers.data.share.models.ShareCategory
-import ru.smalljinn.tiers.data.share.models.ShareElement
 import ru.smalljinn.tiers.data.share.models.ShareList
+import ru.smalljinn.tiers.domain.mappers.toShare
 import javax.inject.Inject
-
-fun TierElement.toShare(image: ByteArray) = ShareElement(position, image)
 
 class CreateShareListUseCase @Inject constructor(
     private val elementRepository: TierElementRepository,

@@ -3,7 +3,6 @@ package ru.smalljinn.tiers.features.tier_lists
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -208,7 +207,6 @@ fun TiersListBody(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TiersColumn(
     modifier: Modifier = Modifier,
@@ -240,7 +238,7 @@ fun TiersColumn(
         }
         items(items = tiersList, key = { it.list.id }) { tierList ->
             TierListItem(
-                modifier = Modifier.animateItemPlacement(),
+                modifier = Modifier.animateItem(),
                 tierList = tierList,
                 onDeleteTierClicked = { onDeleteTierClicked(tierList.list) },
                 onTierListClicked = onTierListClicked,

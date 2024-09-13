@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.features.tier_edit
+package ru.smalljinn.tiers.features.tier_edit.usecase
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
