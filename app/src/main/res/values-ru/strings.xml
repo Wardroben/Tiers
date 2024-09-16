@@ -4,7 +4,7 @@
     <string name="default_tierlist_name">Безымянный</string>
     <string name="add_image_from_device_cd">Добавить изображение с устройства</string>
     <string name="create_new_tier_list_cd">Создать новый тир список</string>
-    <string name="create_tier_list_label">Создать тир список</string>
+    <string name="create_tier_list_label">Создать новый</string>
     <string name="empty_search_results">Хм-м, я не вижу списков содержащих \"%1$s\"</string>
     <string name="search_tier_list_by_name_cd">Искать тир списки по имени</string>
     <string name="clear_search_query_button_cd">Кнопка очистки поискового запроса</string>
@@ -20,7 +20,7 @@
     <string name="empty_lists_label">Нет созданных тир листов. Время творить!</string>
     <string name="create_tier_list">Добавить новый</string>
     <string name="category_name_label">Название категории</string>
-    <string name="search_images_label">Поиск фото</string>
+    <string name="search_images_label">Поиск изображений</string>
     <string name="search_images_via_internet">Поиск фото в Интернете</string>
     <string name="here_will_be_images_from_google_search">Здесь будут фото из поисковика Google</string>
     <string name="google_api_key_cd">Google API ключ</string>
@@ -30,14 +30,10 @@
     <string name="navigate_back_cd">Вернуться обратно</string>
     <string name="go_to_settings_cd">Перейти в настройки</string>
     <string name="tier_name_search_label">Название тира</string>
-    <string name="google_api_instruction_before_link">Для работы поиска требуется ключ Google API и идентификатор поисковой системы. Подробную инструкцию по их созданию можно изучить по следующей ссылке: </string>
-    <string name="google_api_instruction_after_link">Коротко, нужно создать проект, получить к нему ключ API, а после создать поисковую систему и получить ключ CX, а после ввести в текстовые поля ниже.\n\nЕсли оставить поля пустыми, то будет использован ключ по умолчанию, но у него есть ограничение в 100 запросов в день, так что он может не работать.</string>
     <string name="search_images_instruction_cd">Инструкция настройки поиска изображений</string>
-    <string name="google_api_instruction_link">Инструкция</string>
-    <string name="key_error">API или CX ключи неверны. Будут использованы ключи по умолчанию.</string>
-    <string name="incorrect_keys_sheet_message">Неверный API или CX ключ. Перейди в настройки приложения и исправь их.</string>
     <string name="http_error_sheet_message">Интернет ошибка</string>
     <string name="unexpected_error_sheet_message">Неожиданная ошибка</string>
     <string name="io_error_sheet_message">Ошибка соедиения: %1$s</string>
     <string name="no_internet_message">Невозможно искать изображения без Интернет соединения</string>
+    <string name="keys_settings_notification">Теперь это приложение считывает изображения из поиска Google, и это означает, что более не требуется установка различных ключей.</string>
 </resources>

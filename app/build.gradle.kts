@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.serialization)
     alias(libs.plugins.kapt)
     alias(libs.plugins.hilt)
-    //alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -18,7 +17,7 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "0.3"
+        versionName = "0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -30,7 +29,6 @@ android {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
-
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -46,6 +44,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -61,9 +60,16 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes.addAll(
+                arrayOf(
+                    "/META-INF/{AL2.0,LGPL2.1}",
+                    //"META-INF/DEPENDENCIES",
+                    //"mozilla/public-suffix-list.txt"
+                )
+            )
         }
     }
+
 }
 
 kapt {
@@ -71,8 +77,8 @@ kapt {
 }
 
 dependencies {
-
-implementation(libs.androidx.viewmodel.lifecycle)
+    implementation(libs.jsoup)
+    implementation(libs.androidx.viewmodel.lifecycle)
     implementation(libs.coil)
     //implementation(libs.glide)
 
@@ -81,11 +87,6 @@ implementation(libs.androidx.viewmodel.lifecycle)
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
-
-    implementation(libs.retrofit2)
-    implementation(libs.retrofit2.converter)
-    implementation(libs.okhttp3)
-    implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.serialization.cbor)
 
     implementation(libs.hilt)
@@ -114,4 +115,7 @@ implementation(libs.androidx.viewmodel.lifecycle)
     androidTestImplementation(libs.androidx.navigation.testing)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    //implementation(libs.skrapeit)
 }

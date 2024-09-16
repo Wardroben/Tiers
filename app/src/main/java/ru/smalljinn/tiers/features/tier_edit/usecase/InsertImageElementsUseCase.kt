@@ -9,7 +9,7 @@ import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.di.IoDispatcher
 import javax.inject.Inject
 
-class InsertElementsUseCase @Inject constructor(
+class InsertImageElementsUseCase @Inject constructor(
     private val elementRepository: TierElementRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {

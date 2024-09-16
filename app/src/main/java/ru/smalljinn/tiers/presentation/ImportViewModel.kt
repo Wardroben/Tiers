@@ -20,7 +20,7 @@ class ImportViewModel @Inject constructor(
     override fun obtainEvent(event: ImportEvent) {
         when (event) {
             is ImportEvent.Import -> viewModelScope.launch {
-                importListUseCase.invoke(event.shareList)
+                val imported = importListUseCase.invoke(event.shareList)
             }
         }
     }

@@ -26,7 +26,8 @@ import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
 import ru.smalljinn.tiers.data.preferences.model.UserSettings
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
-import ru.smalljinn.tiers.features.tier_edit.usecase.InsertElementsUseCase
+import ru.smalljinn.tiers.features.tier_edit.usecase.GetInternetImagesUseCase
+import ru.smalljinn.tiers.features.tier_edit.usecase.InsertImageElementsUseCase
 import ru.smalljinn.tiers.features.tier_edit.usecase.PinElementUseCase
 import ru.smalljinn.tiers.features.tier_edit.usecase.RemoveCategoryUseCase
 import ru.smalljinn.tiers.features.tier_edit.usecase.UnpinElementsUseCase
@@ -43,12 +44,13 @@ class TierEditViewModel @Inject constructor(
     private val elementRepository: TierElementRepository,
     private val listRepository: TierListRepository,
     private val networkImageRepository: NetworkImageRepository,
-    preferencesRepository: PreferencesRepository,
     private val deleteElementsUseCase: DeleteElementsUseCase,
-    private val insertElementsUseCase: InsertElementsUseCase,
+    private val insertImageElementsUseCase: InsertImageElementsUseCase,
     private val unpinElementsUseCase: UnpinElementsUseCase,
     private val pinElementUseCase: PinElementUseCase,
+    private val getInternetImagesUseCase: GetInternetImagesUseCase,
     private val removeCategoryUseCase: RemoveCategoryUseCase,
+    preferencesRepository: PreferencesRepository,
     savedStateHandle: SavedStateHandle,
     connectivityObserver: ConnectivityObserver
 ) : ViewModel(), EventHandler<EditEvent> {
@@ -166,7 +168,7 @@ class TierEditViewModel @Inject constructor(
 
             is EditEvent.AddImages -> viewModelScope.launch {
                 val addedImageUris = deviceImageRepository.insertPhotos(event.images)
-                insertElementsUseCase(currentListId, addedImageUris)
+                insertImageElementsUseCase(currentListId, addedImageUris)
             }
 
             is EditEvent.SelectCategory -> {
@@ -202,7 +204,7 @@ class TierEditViewModel @Inject constructor(
 
                         is Result.Success -> {
                             //TODO result.data!!
-                            insertElementsUseCase(currentListId, result.data!!)
+                            insertImageElementsUseCase(currentListId, result.data!!)
                             val imageToRemove =
                                 searchStateStream.value.images.elementAt(event.index)
                             searchStateStream.update { state ->
@@ -219,7 +221,18 @@ class TierEditViewModel @Inject constructor(
             is EditEvent.SearchImages -> {
                 if (event.query.isBlank() || event.query.length < 2) return
                 viewModelScope.launch {
-                    val imagesStream = networkImageRepository.getNetworkImagesList(event.query)
+                    val imagesStream = getInternetImagesUseCase(event.query)
+                    imagesStream.collect { result ->
+                        when (result) {
+                            is Result.Error -> searchStateStream.update { it.copy(errorMessage = result.message) }
+                            is Result.Loading -> searchStateStream.update { it.copy(isLoading = result.isLoading) }
+                            is Result.Success -> searchStateStream.update { searchState ->
+                                searchState.copy(images = result.data?.map { it.link }
+                                    ?: emptyList(), errorMessage = null)
+                            }
+                        }
+                    }
+                    /*val imagesStream = networkImageRepository.getNetworkImagesList(event.query)
                     imagesStream.collect { result ->
                         when (result) {
                             is Result.Error -> searchStateStream.update { it.copy(errorMessage = result.message) }
@@ -229,7 +242,7 @@ class TierEditViewModel @Inject constructor(
                                     ?: emptyList(), errorMessage = null)
                             }
                         }
-                    }
+                    }*/
                 }
             }
 

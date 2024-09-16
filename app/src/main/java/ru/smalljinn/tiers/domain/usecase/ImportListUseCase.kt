@@ -22,8 +22,8 @@ class ImportListUseCase @Inject constructor(
     private val elementRepository: TierElementRepository,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ) {
-    suspend operator fun invoke(shareList: ShareList) {
-        withContext(dispatcher) {
+    suspend operator fun invoke(shareList: ShareList): Boolean {
+        return withContext(dispatcher) {
             val insertedListId: Long = listRepository.insertTierList(shareList.toEntity())
             //make unattached elements and insert it to list
             val unattachedElements = shareList.unattachedElements.map { share ->
@@ -56,6 +56,8 @@ class ImportListUseCase @Inject constructor(
                 }
                 elementRepository.insertTierElements(categoryElements)
             }
+            //TODO return false if error -> make checks at actions before
+            true
         }
     }
 }

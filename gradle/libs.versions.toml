@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.0"
+desugar_jdk_libs = "2.1.2"
 kotlin = "1.9.25"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -13,19 +14,23 @@ retrofit2 = "2.11.0"
 ksp = "1.9.25-1.0.20"
 okhttp3 = "4.12.0"
 secretsGradlePluginVersion = "2.0.1"
+skrapeit = "1.3.0-alpha.1"
 vmLifecycle = "2.8.5"
 serialization = "1.6.3"
 coroutines = "1.8.1"
-hilt = "2.51.1"
+hilt = "2.52"
+hiltNavigationCompose = "1.2.0"
 navigation = "2.8.0"
 lifecycleCompose = "2.8.5"
 #glide = "1.0.0-beta01"
 coil = "2.7.0"
 reorderable = "2.3.0"
 datastorePreferences = "1.1.1"
+jsoup = "1.18.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-kotlinx-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
@@ -65,9 +70,13 @@ kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 #Hilt
 hilt = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
-hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.2.0" }
+hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+#skrapeit = { group = "it.skrape", name = "skrapeit", version.ref = "skrapeit" }
+#ksoup = {group = "com.mohamedrejeb.ksoup", name = "ksoup-html", version.ref = "ksoup"}
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+#skrapeit = {module = "it.skrape", name = "skrapeit", version = "1.2.2"}
 #{ group = "", name = "", version.ref = "" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -76,5 +85,6 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secretsGradlePluginVersion" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+
 kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+#compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

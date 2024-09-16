@@ -5,7 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -20,34 +19,18 @@ class PreferencesRepositoryImpl @Inject constructor(
 ) : PreferencesRepository {
     private object PreferencesKeys {
         val VIBRATION = booleanPreferencesKey("vibration")
-        val GOOGLE_API_KEY = stringPreferencesKey("google_api_key")
-        val CX = stringPreferencesKey("cx")
     }
 
     override fun getSettingsStream(): Flow<UserSettings> =
         appContext.dataStore.data.map { preferences ->
             UserSettings(
-                googleApiKey = preferences[PreferencesKeys.GOOGLE_API_KEY] ?: String(),
                 vibrationEnabled = preferences[PreferencesKeys.VIBRATION] ?: true,
-                cx = preferences[PreferencesKeys.CX] ?: String()
             )
         }
 
     override suspend fun changeVibration(enabled: Boolean) {
         appContext.dataStore.edit { settings ->
             settings[PreferencesKeys.VIBRATION] = enabled
-        }
-    }
-
-    override suspend fun changeApiKey(key: String) {
-        appContext.dataStore.edit { settings ->
-            settings[PreferencesKeys.GOOGLE_API_KEY] = key
-        }
-    }
-
-    override suspend fun changeCX(cx: String) {
-        appContext.dataStore.edit { settings ->
-            settings[PreferencesKeys.CX] = cx
         }
     }
 }

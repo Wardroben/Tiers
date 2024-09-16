@@ -2,6 +2,7 @@
 buildscript {
     dependencies {
         classpath(libs.google.secrets)
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.52")
     }
 }
 plugins {
@@ -13,5 +14,6 @@ plugins {
     alias(libs.plugins.hilt) apply false
     //alias(libs.plugins.compose.compiler) apply false
 }
+
 val debugVersionNameSuffix by extra("debug")
 val releaseVersionNameSuffix by extra("release")

@@ -3,7 +3,7 @@
     <string name="default_tierlist_name">Untitled</string>
     <string name="add_image_from_device_cd">Add image from device</string>
     <string name="create_new_tier_list_cd">Create new tier list</string>
-    <string name="create_tier_list_label">Create tier list</string>
+    <string name="create_tier_list_label">Create new</string>
     <string name="empty_search_results">Hmm, I did not see tiers contains \"%1$s\"</string>
     <string name="search_tier_list_by_name_cd">Search tier list by name</string>
     <string name="clear_search_query_button_cd">Clear search query button</string>
@@ -29,14 +29,10 @@
     <string name="navigate_back_cd">Navigate back</string>
     <string name="go_to_settings_cd">Go to settings</string>
     <string name="tier_name_search_label">Tier name</string>
-    <string name="google_api_instruction_before_link">The search requires a Google API key and a search engine ID to work. Detailed instructions on how to create them can be found at the following link: </string>
-    <string name="google_api_instruction_after_link">"Briefly, you need to create a project, get the API key for it, and then create a search engine and get the CX key, and then enter it into the text fields above.\n\nIf you leave the fields blank, the default key will be used, but it has a limit of 100 requests per day, so it may not work. "</string>
     <string name="search_images_instruction_cd">Instructions on how to set up an image search</string>
-    <string name="google_api_instruction_link">Instruction</string>
-    <string name="key_error">API or CX keys is incorrect. Default keys will be used.</string>
-    <string name="incorrect_keys_sheet_message">Incorrect API or CX keys. Please, go to the app settings and fix it.</string>
     <string name="http_error_sheet_message">Internet error</string>
     <string name="unexpected_error_sheet_message">Unexpected Error</string>
     <string name="io_error_sheet_message">Connection error: %1$s</string>
     <string name="no_internet_message">Can\'t search images without Internet connection</string>
+    <string name="keys_settings_notification">Now this app uses scraping of google images site and it means that you shouldn\'t set keys</string>
 </resources>
