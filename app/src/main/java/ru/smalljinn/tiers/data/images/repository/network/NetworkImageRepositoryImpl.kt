@@ -8,8 +8,6 @@ import ru.smalljinn.tiers.data.images.photo_processor.PhotoProcessor
 import ru.smalljinn.tiers.util.Result
 import javax.inject.Inject
 
-const val TAG = "NetworkImage"
-
 class NetworkImageRepositoryImpl @Inject constructor(
     private val photoProcessor: PhotoProcessor,
 ) : NetworkImageRepository {

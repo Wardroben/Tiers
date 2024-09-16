@@ -2,7 +2,7 @@
 buildscript {
     dependencies {
         classpath(libs.google.secrets)
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.52")
+        classpath(libs.hilt.android.gradle.plugin)
     }
 }
 plugins {
