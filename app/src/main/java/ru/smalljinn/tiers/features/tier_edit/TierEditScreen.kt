@@ -109,6 +109,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -404,7 +405,7 @@ fun UnpinnedImages(
                     )
                     .dragAndDropSource {
                         detectTapGestures(
-                            onLongPress = {
+                            onPress = {
                                 startTransfer(
                                     DragAndDropTransferData(
                                         ClipData.newPlainText(
@@ -520,6 +521,7 @@ fun CategoryItem(
     LaunchedEffect(key1 = categoryWithElements.elements) {
         listReorderChannel.trySend(Unit)
     }
+    val interactionSource = remember { MutableInteractionSource() }
     Card(
         modifier = modifier
             .defaultMinSize(minHeight = categoryHeight)
@@ -564,7 +566,6 @@ fun CategoryItem(
                         state = reorderableLazyGridState,
                         key = element.elementId
                     ) {
-                        val interactionSource = remember { MutableInteractionSource() }
                         ElementImage(
                             imageUrl = element.imageUrl,
                             modifier = Modifier
@@ -773,7 +774,8 @@ fun GoogleImageModalBottomSheet(
             AnimatedVisibility(visible = images.isEmpty()) {
                 Text(
                     text = stringResource(R.string.here_will_be_images_from_google_search),
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
                 )
             }
             AnimatedVisibility(visible = !errorMessage.isNullOrEmpty()) {
