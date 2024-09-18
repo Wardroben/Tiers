@@ -1,7 +1,7 @@
 # Tiers app
 An application in which you can create tier lists on your Android mobile device.
 ## Ways to add images
-1. Add images from your device or google photo or search it
+1. Add images from your device or google photo
 2. Search google images directly from the app and add to your collection!
 ## Share and import tier lists
 Share the file with friends and import lists from friends.
