@@ -36,4 +36,5 @@
     <string name="io_error_sheet_message">Ошибка соедиения: %1$s</string>
     <string name="no_internet_message">Невозможно искать изображения без Интернет соединения</string>
     <string name="keys_settings_notification">Теперь это приложение считывает изображения из поиска Google, и это означает, что более не требуется установка различных ключей.</string>
+    <string name="create_new_category">Создать новую категорию</string>
 </resources>

@@ -54,8 +54,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -71,6 +69,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -170,23 +169,11 @@ fun TierEditScreen(
                     },
                     actions = {
                         IconButton(onClick = {
-                            if (connectionStatus == ConnectivityObserver.ConnectionStatus.AVAILABLE)
-                                viewModel.obtainEvent(EditEvent.OpenSearchSheet)
-                            else Toast.makeText(
-                                context,
-                                context.getString(R.string.no_internet_message),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            mediaLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                         }) {
                             Icon(
-                                imageVector = Icons.Default.Search,
+                                painter = painterResource(R.drawable.outline_add_photo_alternate_24),
                                 contentDescription = stringResource(R.string.search_images_via_internet)
-                            )
-                        }
-                        IconButton(onClick = { viewModel.obtainEvent(EditEvent.CreateNewCategory) }) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = stringResource(R.string.create_new_category_cd)
                             )
                         }
                     }
@@ -261,7 +248,16 @@ fun TierEditScreen(
             modifier = Modifier.padding(innerPaddings),
             notAttachedElements = uiState.notAttachedElements,
             categories = uiState.categoriesWithElements,
-            onAddImageClicked = { mediaLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
+            onSearchImageClicked = {
+                if (connectionStatus == ConnectivityObserver.ConnectionStatus.AVAILABLE)
+                    viewModel.obtainEvent(EditEvent.OpenSearchSheet)
+                else Toast.makeText(
+                    context,
+                    context.getString(R.string.no_internet_message),
+                    Toast.LENGTH_SHORT
+                ).show()
+
+            },
             onCategoryClicked = { category ->
                 viewModel.obtainEvent(EditEvent.SelectCategory(category))
             },
@@ -282,6 +278,7 @@ fun TierEditScreen(
                     )
                 )
             },
+            onCreateNewCategory = { viewModel.obtainEvent(EditEvent.CreateNewCategory) },
             vibrationEnabled = settings.vibrationEnabled
         )
     }
@@ -313,12 +310,13 @@ fun TierEditBody(
     modifier: Modifier = Modifier,
     notAttachedElements: List<TierElement>,
     categories: List<TierCategoryWithElements>,
-    onAddImageClicked: () -> Unit,
+    onSearchImageClicked: () -> Unit,
     onCategoryClicked: (TierCategory) -> Unit,
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
     onDeleteItemDropped: (Long) -> Unit,
     onElementUnpinDropped: (Long) -> Unit,
     onReorderElements: (firstId: Long, secondId: Long) -> Unit,
+    onCreateNewCategory: () -> Unit,
     vibrationEnabled: Boolean
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -328,11 +326,12 @@ fun TierEditBody(
             onCategoryClicked = onCategoryClicked,
             onTierElementDropped = onTierElementDropped,
             onReorderElements = onReorderElements,
+            onCreateNewCategory = onCreateNewCategory,
             vibrationEnabled = vibrationEnabled
         )
         UnpinnedImages(
             images = notAttachedElements,
-            onAddImageClicked = onAddImageClicked,
+            onSearchImageClicked = onSearchImageClicked,
             onDeleteItemDropped = onDeleteItemDropped,
             onElementUnpinDropped = onElementUnpinDropped
         )
@@ -344,7 +343,7 @@ fun TierEditBody(
 fun UnpinnedImages(
     modifier: Modifier = Modifier,
     images: List<TierElement>,
-    onAddImageClicked: () -> Unit,
+    onSearchImageClicked: () -> Unit,
     onDeleteItemDropped: (Long) -> Unit,
     onElementUnpinDropped: (Long) -> Unit
 ) {
@@ -392,7 +391,7 @@ fun UnpinnedImages(
         horizontalArrangement = Arrangement.spacedBy(itemArrangement),
         contentPadding = PaddingValues(itemArrangement)
     ) {
-        item { AddDeleteImageItem(onDeleteItemDropped = onDeleteItemDropped) { onAddImageClicked() } }
+        item { AddDeleteImageItem(onDeleteItemDropped = onDeleteItemDropped) { onSearchImageClicked() } }
         items(items = images, key = { it.elementId }) { element ->
             ElementImage(
                 imageUrl = element.imageUrl,
@@ -428,12 +427,14 @@ fun CategoriesList(
     onCategoryClicked: (TierCategory) -> Unit,
     onTierElementDropped: (categoryId: Long, elementId: Long) -> Unit,
     onReorderElements: (firstId: Long, secondId: Long) -> Unit,
+    onCreateNewCategory: () -> Unit,
     vibrationEnabled: Boolean
 ) {
     val itemArrangement = dimensionResource(id = R.dimen.item_arrangement)
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(itemArrangement),
+        horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = PaddingValues(start = itemArrangement, end = itemArrangement)
     ) {
         items(items = categories, key = { it.category.id }) { categoryWithElements ->
@@ -445,6 +446,11 @@ fun CategoriesList(
                 onReorderElements = onReorderElements,
                 vibrationEnabled = vibrationEnabled
             )
+        }
+        item {
+            TextButton(onClick = onCreateNewCategory) {
+                Text(stringResource(R.string.create_new_category))
+            }
         }
     }
 }
@@ -621,7 +627,7 @@ enum class DragState {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onAddClicked: () -> Unit) {
+private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onSearchClicked: () -> Unit) {
     var dragState by remember { mutableStateOf(DragState.STOPPED) }
     val dndCallback = remember {
         object : DragAndDropTarget {
@@ -676,7 +682,7 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onAddClicked
                 },
                 target = dndCallback
             )
-            .clickable { onAddClicked() }
+            .clickable { onSearchClicked() }
     ) {
         AnimatedContent(
             targetState = dragState != DragState.STOPPED,
@@ -689,7 +695,7 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onAddClicked
                 )
             } else {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    painter = painterResource(R.drawable.baseline_image_search_24),
                     contentDescription = stringResource(R.string.add_image_from_device_cd)
                 )
             }
@@ -712,7 +718,6 @@ private fun TierCategoryInfo(
         contentAlignment = Alignment.Center
     ) {
         //TODO resizable text
-        //Text(text = category.name, maxLines = 2, color = Color.Black)
         TextOnColor(text = category.name)
     }
 }
