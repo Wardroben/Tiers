@@ -22,6 +22,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -404,18 +405,16 @@ fun UnpinnedImages(
                         maxWidth = imageSize + 1.dp
                     )
                     .dragAndDropSource {
-                        detectTapGestures(
-                            onPress = {
-                                startTransfer(
-                                    DragAndDropTransferData(
-                                        ClipData.newPlainText(
-                                            DND_ELEMENT_ID_LABEL,
-                                            element.elementId.toString()
-                                        )
+                        detectVerticalDragGestures { _, dragAmount ->
+                            if (dragAmount < 5) startTransfer(
+                                DragAndDropTransferData(
+                                    ClipData.newPlainText(
+                                        DND_ELEMENT_ID_LABEL,
+                                        element.elementId.toString()
                                     )
                                 )
-                            }
-                        )
+                            )
+                        }
                     }
             )
         }
