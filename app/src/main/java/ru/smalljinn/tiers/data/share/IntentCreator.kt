@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.domain.share
+package ru.smalljinn.tiers.data.share
 
 import android.content.Intent
 import android.net.Uri

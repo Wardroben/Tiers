@@ -17,7 +17,7 @@
         android:theme="@style/Theme.Tiers"
         tools:targetApi="31">
         <activity
-            android:name=".presentation.MainActivity"
+            android:name=".features.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Tiers">
             <intent-filter>

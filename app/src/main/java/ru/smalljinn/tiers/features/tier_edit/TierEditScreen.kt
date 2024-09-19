@@ -124,9 +124,9 @@ import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierCategoryWithElements
 import ru.smalljinn.tiers.data.database.model.TierElement
+import ru.smalljinn.tiers.data.network.observer.ConnectivityObserver
 import ru.smalljinn.tiers.features.components.TextOnColor
 import ru.smalljinn.tiers.features.components.keyboardAsState
-import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import kotlin.math.roundToInt

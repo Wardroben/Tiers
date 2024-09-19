@@ -3,43 +3,33 @@ package ru.smalljinn.tiers.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import ru.smalljinn.tiers.features.app_settings.SettingsScreen
 import ru.smalljinn.tiers.features.tier_edit.TierEditScreen
 import ru.smalljinn.tiers.features.tier_lists.TiersListScreen
+import ru.smalljinn.tiers.navigation.routes.Settings
+import ru.smalljinn.tiers.navigation.routes.TierEdit
+import ru.smalljinn.tiers.navigation.routes.TiersList
 
 @Composable
 fun TierNavHost(
     modifier: Modifier = Modifier,
     navHostController: NavHostController = rememberNavController(),
-    startDestination: String = NavigationDestination.TiersList.route
 ) {
     NavHost(
         modifier = modifier,
         navController = navHostController,
-        startDestination = startDestination,
+        startDestination = TiersList,
     ) {
-        composable(route = NavigationDestination.TiersList.route) {
+        composable<TiersList> {
             TiersListScreen(
-                navigateToEdit = { tierId ->
-                    navHostController.navigate(NavigationDestination.Edit.createRoute(tierId))
-                },
-                navigateToSettings = { navHostController.navigate(NavigationDestination.Settings.route) }
+                navigateToEdit = { tierId -> navHostController.navigate(TierEdit(listId = tierId)) },
+                navigateToSettings = { navHostController.navigate(Settings) }
             )
         }
-        composable(
-            route = NavigationDestination.Edit.route,
-            arguments = listOf(navArgument(EDIT_TIER_NAV_ARGUMENT) { type = NavType.LongType })
-        ) {
-            TierEditScreen()
-        }
-
-        composable(route = NavigationDestination.Settings.route) {
-            SettingsScreen(navigateBack = { navHostController.navigateUp() })
-        }
+        composable<Settings> { SettingsScreen(navigateBack = { navHostController.navigateUp() }) }
+        composable<TierEdit> { TierEditScreen() }
     }
 }

@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation
+package ru.smalljinn.tiers.features
 
 import android.content.Intent
 import android.os.Bundle

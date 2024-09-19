@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.presentation
+package ru.smalljinn.tiers.features
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

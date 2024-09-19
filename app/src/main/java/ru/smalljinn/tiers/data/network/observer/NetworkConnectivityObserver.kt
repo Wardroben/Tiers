@@ -1,4 +1,4 @@
-package ru.smalljinn.tiers.util.network.observer
+package ru.smalljinn.tiers.data.network.observer
 
 import android.content.Context
 import android.net.ConnectivityManager

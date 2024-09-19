@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,6 +24,7 @@ import ru.smalljinn.tiers.data.database.repository.TierElementRepository
 import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.data.images.repository.device.DeviceImageRepository
 import ru.smalljinn.tiers.data.images.repository.network.NetworkImageRepository
+import ru.smalljinn.tiers.data.network.observer.ConnectivityObserver
 import ru.smalljinn.tiers.data.preferences.model.UserSettings
 import ru.smalljinn.tiers.data.preferences.repository.PreferencesRepository
 import ru.smalljinn.tiers.domain.usecase.DeleteElementsUseCase
@@ -31,10 +33,9 @@ import ru.smalljinn.tiers.features.tier_edit.usecase.InsertImageElementsUseCase
 import ru.smalljinn.tiers.features.tier_edit.usecase.PinElementUseCase
 import ru.smalljinn.tiers.features.tier_edit.usecase.RemoveCategoryUseCase
 import ru.smalljinn.tiers.features.tier_edit.usecase.UnpinElementsUseCase
-import ru.smalljinn.tiers.navigation.EDIT_TIER_NAV_ARGUMENT
+import ru.smalljinn.tiers.navigation.routes.TierEdit
 import ru.smalljinn.tiers.util.EventHandler
 import ru.smalljinn.tiers.util.Result
-import ru.smalljinn.tiers.util.network.observer.ConnectivityObserver
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,8 +55,7 @@ class TierEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     connectivityObserver: ConnectivityObserver
 ) : ViewModel(), EventHandler<EditEvent> {
-    private val currentListId: Long = savedStateHandle.get<Long>(EDIT_TIER_NAV_ARGUMENT)
-        ?: throw IllegalArgumentException("Bad navigation argument")
+    private val currentListId: Long = savedStateHandle.toRoute<TierEdit>().listId
 
     private val notAttachedElements =
         elementRepository.getNotAttachedElementsOfListStream(currentListId)
