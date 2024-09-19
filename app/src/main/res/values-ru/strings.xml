@@ -37,4 +37,6 @@
     <string name="no_internet_message">Невозможно искать изображения без Интернет соединения</string>
     <string name="keys_settings_notification">Теперь это приложение считывает изображения из поиска Google, и это означает, что более не требуется установка различных ключей.</string>
     <string name="create_new_category">Создать новую категорию</string>
+    <string name="save_category_cd">Сохранить категорию %1$s</string>
+    <string name="delete_category_cd">Удалить категорию %1$s</string>
 </resources>

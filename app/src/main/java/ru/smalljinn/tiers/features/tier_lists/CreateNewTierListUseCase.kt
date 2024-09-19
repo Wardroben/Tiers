@@ -1,9 +1,12 @@
 package ru.smalljinn.tiers.features.tier_lists
 
+import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import ru.smalljinn.tiers.R
 import ru.smalljinn.tiers.data.database.model.TierCategory
 import ru.smalljinn.tiers.data.database.model.TierList
 import ru.smalljinn.tiers.data.database.repository.TierCategoryRepository
@@ -13,10 +16,14 @@ import javax.inject.Inject
 class CreateNewTierListUseCase @Inject constructor(
     private val tierListRepository: TierListRepository,
     private val tierCategoryRepository: TierCategoryRepository,
+    @ApplicationContext private val appContext: Context
 ) {
-    suspend operator fun invoke(name: String): Long {
+    suspend operator fun invoke(name: String? = null): Long {
         return withContext(Dispatchers.IO) {
-            val tierListId = tierListRepository.insertTierList(TierList(name = name))
+            val listName =
+                if (name.isNullOrBlank()) appContext.getString(R.string.untitled_tierlist_name)
+                else name
+            val tierListId = tierListRepository.insertTierList(TierList(name = listName))
             val categoriesToAdd = mutableListOf<TierCategory>()
             categoriesToAdd.add(
                 TierCategory(

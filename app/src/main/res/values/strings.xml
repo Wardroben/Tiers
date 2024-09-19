@@ -36,4 +36,6 @@
     <string name="no_internet_message">Can\'t search images without Internet connection</string>
     <string name="keys_settings_notification">Now this app uses scraping of google images site and it means that you shouldn\'t set keys</string>
     <string name="create_new_category">Create new category</string>
+    <string name="save_category_cd">Save category %1$s</string>
+    <string name="delete_category_cd">Delete category %1$s</string>
 </resources>

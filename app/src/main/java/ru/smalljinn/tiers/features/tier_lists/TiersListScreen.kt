@@ -92,8 +92,7 @@ fun TiersListScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
     val tiersScrollState = rememberLazyListState()
-    val createNewTierList =
-        { viewModel.obtainEvent(TiersEvent.CreateNew(name = context.getString(R.string.untitled_tierlist_name))) }
+    val createNewTierList = { viewModel.obtainEvent(TiersEvent.CreateNew) }
     val showAddButton by remember {
         derivedStateOf {
             tiersScrollState.canScrollForward

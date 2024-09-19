@@ -54,7 +54,7 @@ class TiersListViewModel @Inject constructor(
         }
     }.stateIn(
         viewModelScope,
-        SharingStarted.Lazily,
+        SharingStarted.Lazily, //to prevent loading when user returns from other screens
         TiersState.Loading
     )
 
@@ -63,12 +63,13 @@ class TiersListViewModel @Inject constructor(
 
     override fun obtainEvent(event: TiersEvent) {
         when (event) {
-            is TiersEvent.Delete -> viewModelScope.launch {
-                deleteTierListUseCase(event.tierList)
-            }
+            is TiersEvent.Delete -> viewModelScope.launch { deleteTierListUseCase(event.tierList) }
 
-            is TiersEvent.CreateNew -> viewModelScope.launch {
-                createNewTierListUseCase(event.name)
+            TiersEvent.CreateNew -> viewModelScope.launch {
+                if (uiState.value is TiersState.Success &&
+                    (uiState.value as TiersState.Success).searchEnabled
+                ) createNewTierListUseCase(name = searchQuery)
+                else createNewTierListUseCase()
             }
 
             is TiersEvent.Search -> searchQuery = event.query

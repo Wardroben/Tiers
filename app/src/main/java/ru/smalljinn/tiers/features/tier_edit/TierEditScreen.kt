@@ -742,7 +742,6 @@ fun GoogleImageModalBottomSheet(
     val loader = ImageLoader(context)
     val focus = remember { FocusRequester() }
 
-
     val itemSpacing = dimensionResource(id = R.dimen.item_spacing)
     val roundCornerSize = dimensionResource(id = R.dimen.round_clip)
     val minImageSize = remember { 80.dp }
@@ -794,7 +793,6 @@ fun GoogleImageModalBottomSheet(
                 columns = StaggeredGridCells.Adaptive(minSize = minImageSize),
                 horizontalArrangement = Arrangement.spacedBy(itemSpacing),
                 verticalItemSpacing = itemSpacing
-                //verticalArrangement = Arrangement.spacedBy(itemSpacing)
             ) {
                 itemsIndexed(items = images, key = { _, url -> url }) { index, url ->
                     val request = ImageRequest.Builder(context = context)
@@ -900,7 +898,10 @@ fun CategoryModalBottomSheet(
                     IconButton(onClick = { onDeleteClicked(category) }) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
-                            contentDescription = "Delete category ${category.name}"
+                            contentDescription = stringResource(
+                                R.string.delete_category_cd,
+                                category.name
+                            )
                         )
                     }
 
@@ -913,7 +914,10 @@ fun CategoryModalBottomSheet(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.outline_save_24),
-                        contentDescription = "Save category ${category.name}"
+                        contentDescription = stringResource(
+                            R.string.save_category_cd,
+                            category.name
+                        )
                     )
                 }
             }
