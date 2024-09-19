@@ -204,6 +204,8 @@ fun TiersListBody(
             onShareTierClicked = onShareTierClicked,
             searchEnabled = uiState.searchEnabled
         )
+
+        is TiersState.Error -> ErrorBody(message = uiState.message)
     }
 }
 
@@ -418,6 +420,17 @@ fun ColorsColumn(modifier: Modifier = Modifier, categories: List<TierCategory>) 
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ErrorBody(modifier: Modifier = Modifier, message: String?) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(
+            text = "Error loading tiers: $message",
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

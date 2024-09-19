@@ -11,4 +11,5 @@ sealed class TiersState {
         val tiersList: List<TierListWithCategories>,
         val searchEnabled: Boolean = false
     ) : TiersState()
+    data class Error(val message: String?) : TiersState()
 }

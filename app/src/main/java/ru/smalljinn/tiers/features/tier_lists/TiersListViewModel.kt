@@ -14,35 +14,47 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.smalljinn.tiers.data.database.model.TierListWithCategories
-import ru.smalljinn.tiers.data.database.repository.TierListRepository
 import ru.smalljinn.tiers.util.EventHandler
+import ru.smalljinn.tiers.util.Result
 import javax.inject.Inject
 
 @HiltViewModel
 class TiersListViewModel @Inject constructor(
-    tierListRepository: TierListRepository,
     private val createNewTierListUseCase: CreateNewTierListUseCase,
     private val deleteTierListUseCase: DeleteTierListUseCase,
-    private val exportShareListUseCase: ExportShareListUseCase
+    private val exportShareListUseCase: ExportShareListUseCase,
+    getTiersWithCategoriesUseCase: GetTiersWithCategoriesUseCase
 ) : ViewModel(), EventHandler<TiersEvent> {
 
     var searchQuery by mutableStateOf("")
         private set
 
-    private val tiersFlow = tierListRepository.getAllListsWithCategoriesStream()
+    private val tiersFlow =
+        getTiersWithCategoriesUseCase()
 
-    val uiState = combine(tiersFlow, snapshotFlow { searchQuery }) { tiers, search ->
-        if (tiers.isEmpty()) TiersState.Empty
-        else {
-            val foundLists = searchLists(tiers, search)
-            TiersState.Success(
-                tiersList = foundLists,
-                searchEnabled = shouldEnableSearch(listsCount = tiers.size, searchQuery = search)
-            )
+    val uiState = combine(tiersFlow, snapshotFlow { searchQuery }) { result, search ->
+        when (result) {
+            is Result.Error -> TiersState.Error(result.message)
+            is Result.Loading -> TiersState.Loading
+            is Result.Success -> {
+                with(result) {
+                    if (data.isNullOrEmpty()) TiersState.Empty
+                    else {
+                        val foundLists = searchLists(data, search)
+                        TiersState.Success(
+                            tiersList = foundLists,
+                            searchEnabled = shouldEnableSearch(
+                                listsCount = data.size,
+                                searchQuery = search
+                            )
+                        )
+                    }
+                }
+            }
         }
     }.stateIn(
         viewModelScope,
-        SharingStarted.WhileSubscribed(5_000L),
+        SharingStarted.Lazily,
         TiersState.Loading
     )
 

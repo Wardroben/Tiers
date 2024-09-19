@@ -574,12 +574,6 @@ fun CategoryItem(
                         ElementImage(
                             imageUrl = element.imageUrl,
                             modifier = Modifier
-                                .sizeIn(
-                                    minWidth = categoryHeight,
-                                    maxHeight = categoryHeight,
-                                    minHeight = categoryHeight - 1.dp,
-                                    maxWidth = categoryHeight + 1.dp
-                                )
                                 .dragAndDropSource {
                                     detectTapGestures(
                                         onLongPress = {
@@ -612,7 +606,14 @@ fun CategoryItem(
                                         Log.i("DRAG", "drag stopped $element")
                                     },
                                     interactionSource = interactionSource
-                                ),
+                                )
+                                .sizeIn(
+                                    minWidth = categoryHeight - 1.dp,
+                                    maxHeight = categoryHeight + 1.dp,
+                                    minHeight = categoryHeight - 1.dp,
+                                    maxWidth = categoryHeight + 1.dp
+                                )
+
                         )
                     }
                 }
@@ -671,9 +672,6 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onSearchClic
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(dimensionResource(id = R.dimen.image_list_size))
-            .clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip)))
-            .drawBehind { drawRect(animatedColor) }
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event
@@ -682,6 +680,9 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onSearchClic
                 },
                 target = dndCallback
             )
+            .size(dimensionResource(id = R.dimen.image_list_size))
+            .clip(RoundedCornerShape(dimensionResource(id = R.dimen.round_clip)))
+            .drawBehind { drawRect(animatedColor) }
             .clickable { onSearchClicked() }
     ) {
         AnimatedContent(
