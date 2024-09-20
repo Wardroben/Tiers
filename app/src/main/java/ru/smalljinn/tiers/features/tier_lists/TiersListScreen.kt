@@ -212,7 +212,6 @@ fun TiersListBody(
         is TiersState.Success -> if (shouldShowGrid) TiersGrid(
             modifier = modifier,
             tiersList = uiState.tiersList,
-            onCreateNewClicked = onCreateNewClicked,
             onDeleteTierClicked = { tierList ->
                 tierListToDelete = tierList
                 dialogVisible = true
@@ -251,7 +250,6 @@ fun TiersListBody(
 fun TiersGrid(
     modifier: Modifier = Modifier,
     tiersList: List<TierListWithCategories>,
-    onCreateNewClicked: () -> Unit,
     onDeleteTierClicked: (TierList) -> Unit,
     onClearSearchQuery: () -> Unit,
     onSearchChanged: (String) -> Unit,

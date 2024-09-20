@@ -13,6 +13,7 @@ data class InternetImage(val link: String)
 
 private const val TAG = "Scraper"
 private const val CONNECTION_TIMEOUT = 5000
+private const val IMAGE_PREFIX = "https://"
 
 class GetInternetImagesUseCase {
     suspend operator fun invoke(query: String): Flow<Result<List<InternetImage>>> {
@@ -28,7 +29,7 @@ class GetInternetImagesUseCase {
                             .userAgent("Mozilla")
                             .get()
                     val links = document.select("img").map { it.attr("src") }
-                    val images = if (links.size > 1) links.takeLast(links.size - 1) else emptyList()
+                    val images = links.filter { it.startsWith(IMAGE_PREFIX) }
                     trySend(Result.Loading(false))
                     trySend(Result.Success(images.map { InternetImage(it) }))
                 }
