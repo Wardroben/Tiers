@@ -1,6 +1,7 @@
 package ru.smalljinn.tiers.features.tier_lists
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
@@ -19,6 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +53,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -61,6 +68,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -85,20 +93,29 @@ fun TiersListScreen(
     modifier: Modifier = Modifier,
     viewModel: TiersListViewModel = hiltViewModel(),
     navigateToEdit: (Long) -> Unit,
-    navigateToSettings: () -> Unit
+    navigateToSettings: () -> Unit,
+    shouldShowGrid: Boolean
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
     val tiersScrollState = rememberLazyListState()
+    val tiersGridScrollState = rememberLazyGridState()
     val createNewTierList = { viewModel.obtainEvent(TiersEvent.CreateNew) }
     val showAddButton by remember {
         derivedStateOf {
-            tiersScrollState.canScrollForward
+            tiersScrollState.canScrollForward || shouldShowGrid
         }
     }
-    val scrollToTop = { scope.launch { tiersScrollState.animateScrollToItem(0) } }
+    val scrollToTop = {
+        scope.launch {
+            if (shouldShowGrid) tiersGridScrollState.animateScrollToItem(0)
+            else tiersScrollState.animateScrollToItem(0)
+        }
+    }
+    val scrollBehavior = if (!shouldShowGrid) TopAppBarDefaults.enterAlwaysScrollBehavior()
+    else TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     //TODO safe channel handling
     LaunchedEffect(key1 = Unit) {
@@ -112,7 +129,7 @@ fun TiersListScreen(
     }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 modifier = Modifier.clickable { scrollToTop() },
@@ -124,7 +141,8 @@ fun TiersListScreen(
                             contentDescription = stringResource(R.string.go_to_settings_cd)
                         )
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
@@ -150,11 +168,13 @@ fun TiersListScreen(
             onCreateNewClicked = createNewTierList,
             onDeleteTierList = { viewModel.obtainEvent(TiersEvent.Delete(it)) },
             tiersListState = tiersScrollState,
+            tiersGridState = tiersGridScrollState,
             onClearSearchQuery = { viewModel.obtainEvent(TiersEvent.ClearSearch) },
             onSearchChanged = { query -> viewModel.obtainEvent(TiersEvent.Search(query)) },
             searchQuery = viewModel.searchQuery,
             onTierListClicked = { tierList: TierList -> navigateToEdit(tierList.id) },
-            onShareTierClicked = { listId -> viewModel.obtainEvent(TiersEvent.ShareList(listId)) }
+            onShareTierClicked = { listId -> viewModel.obtainEvent(TiersEvent.ShareList(listId)) },
+            shouldShowGrid = shouldShowGrid
         )
     }
 }
@@ -166,11 +186,13 @@ fun TiersListBody(
     onCreateNewClicked: () -> Unit,
     onDeleteTierList: (TierList) -> Unit,
     tiersListState: LazyListState,
+    tiersGridState: LazyGridState,
     onClearSearchQuery: () -> Unit,
     onSearchChanged: (String) -> Unit,
     searchQuery: String,
     onTierListClicked: (TierList) -> Unit,
-    onShareTierClicked: (id: Long) -> Unit
+    onShareTierClicked: (id: Long) -> Unit,
+    shouldShowGrid: Boolean
 ) {
     var dialogVisible by rememberSaveable { mutableStateOf(false) }
     var tierListToDelete by remember { mutableStateOf<TierList?>(null) }
@@ -187,7 +209,7 @@ fun TiersListBody(
     when (uiState) {
         TiersState.Empty -> EmptyBody(modifier) { onCreateNewClicked() }
         TiersState.Loading -> LoadingContent(modifier)
-        is TiersState.Success -> TiersColumn(
+        is TiersState.Success -> if (shouldShowGrid) TiersGrid(
             modifier = modifier,
             tiersList = uiState.tiersList,
             onCreateNewClicked = onCreateNewClicked,
@@ -195,7 +217,7 @@ fun TiersListBody(
                 tierListToDelete = tierList
                 dialogVisible = true
             },
-            tiersListState = tiersListState,
+            gridState = tiersGridState,
             onClearSearchQuery = onClearSearchQuery,
             onSearchChanged = onSearchChanged,
             searchQuery = searchQuery,
@@ -203,8 +225,90 @@ fun TiersListBody(
             onShareTierClicked = onShareTierClicked,
             searchEnabled = uiState.searchEnabled
         )
+        else
+            TiersColumn(
+                modifier = modifier,
+                tiersList = uiState.tiersList,
+                onCreateNewClicked = onCreateNewClicked,
+                onDeleteTierClicked = { tierList ->
+                    tierListToDelete = tierList
+                    dialogVisible = true
+                },
+                tiersListState = tiersListState,
+                onClearSearchQuery = onClearSearchQuery,
+                onSearchChanged = onSearchChanged,
+                searchQuery = searchQuery,
+                onTierListClicked = onTierListClicked,
+                onShareTierClicked = onShareTierClicked,
+                searchEnabled = uiState.searchEnabled
+            )
 
         is TiersState.Error -> ErrorBody(message = uiState.message)
+    }
+}
+
+@Composable
+fun TiersGrid(
+    modifier: Modifier = Modifier,
+    tiersList: List<TierListWithCategories>,
+    onCreateNewClicked: () -> Unit,
+    onDeleteTierClicked: (TierList) -> Unit,
+    onClearSearchQuery: () -> Unit,
+    onSearchChanged: (String) -> Unit,
+    searchEnabled: Boolean,
+    searchQuery: String,
+    gridState: LazyGridState = rememberLazyGridState(),
+    onTierListClicked: (TierList) -> Unit,
+    onShareTierClicked: (id: Long) -> Unit
+) {
+    val spacing = dimensionResource(R.dimen.textfield_padding)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing)
+    ) {
+        SearchElement(
+            enabled = searchEnabled,
+            onClearSearchQuery = onClearSearchQuery,
+            onTextChanged = onSearchChanged,
+            searchQuery = searchQuery,
+            isSearchResultEmpty = searchQuery.isNotBlank() && tiersList.isEmpty()
+        )
+        LazyVerticalGrid(
+            modifier = Modifier.weight(1f),
+            columns = GridCells.Adaptive(minSize = 200.dp),
+            verticalArrangement = Arrangement.spacedBy(spacing),
+            horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
+            state = gridState
+        ) {
+            items(items = tiersList, key = { it.list.id }) { tierList ->
+                TierListItem(
+                    modifier = Modifier.animateItem(),
+                    tierList = tierList,
+                    onDeleteTierClicked = { onDeleteTierClicked(tierList.list) },
+                    onTierListClicked = onTierListClicked,
+                    onShareTierClicked = { onShareTierClicked(tierList.list.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptySearchElement(
+    modifier: Modifier = Modifier,
+    searchQuery: String,
+    tiersListSize: Int,
+    onCreateNewClicked: () -> Unit
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        if (searchQuery.isNotBlank() && tiersListSize == 0) NoFoundText(searchQuery)
+        CreateNewTierButton { onCreateNewClicked() }
     }
 }
 
@@ -247,14 +351,10 @@ fun TiersColumn(
             )
         }
         item {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                if (searchQuery.isNotBlank() && tiersList.isEmpty()) NoFoundText(searchQuery)
-                CreateNewTierButton { onCreateNewClicked() }
-            }
+            EmptySearchElement(
+                searchQuery = searchQuery,
+                tiersListSize = tiersList.size
+            ) { onCreateNewClicked() }
         }
     }
 }
@@ -273,37 +373,49 @@ fun SearchElement(
     onClearSearchQuery: () -> Unit,
     onTextChanged: (String) -> Unit,
     searchQuery: String,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    isSearchResultEmpty: Boolean = false
 ) {
-    OutlinedTextField(
-        modifier = modifier.fillMaxWidth(),
-        enabled = enabled,
-        value = searchQuery,
-        onValueChange = onTextChanged,
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = stringResource(R.string.search_tier_list_by_name_cd)
-            )
-        },
-        label = { Text(text = stringResource(R.string.tier_name_search_label)) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        trailingIcon = {
-            AnimatedVisibility(
-                visible = searchQuery.isNotBlank(),
-                exit = scaleOut(),
-                enter = scaleIn()
-            ) {
-                IconButton(onClick = onClearSearchQuery) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = stringResource(R.string.clear_search_query_button_cd),
-                    )
+    Column(
+        modifier.animateContentSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(
+            dimensionResource(R.dimen.vertical_arrangement)
+        )
+    ) {
+        OutlinedTextField(
+            modifier = modifier.fillMaxWidth(),
+            enabled = enabled,
+            value = searchQuery,
+            onValueChange = onTextChanged,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = stringResource(R.string.search_tier_list_by_name_cd)
+                )
+            },
+            label = { Text(text = stringResource(R.string.tier_name_search_label)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            trailingIcon = {
+                AnimatedVisibility(
+                    visible = searchQuery.isNotBlank(),
+                    exit = scaleOut(),
+                    enter = scaleIn()
+                ) {
+                    IconButton(onClick = onClearSearchQuery) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear_search_query_button_cd),
+                        )
+                    }
                 }
             }
+        )
+        AnimatedVisibility(isSearchResultEmpty) {
+            NoFoundText(searchQuery)
         }
-    )
+    }
 }
 
 @Composable

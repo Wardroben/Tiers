@@ -25,6 +25,7 @@ coil = "2.7.0"
 reorderable = "2.3.0"
 datastorePreferences = "1.1.1"
 jsoup = "1.18.1"
+adaptiveAndroid = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -68,6 +69,7 @@ hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", v
 
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+androidx-adaptive-android = { group = "androidx.compose.material3.adaptive", name = "adaptive-android", version.ref = "adaptiveAndroid" }
 #skrapeit = {module = "it.skrape", name = "skrapeit", version = "1.2.2"}
 #{ group = "", name = "", version.ref = "" }
 [plugins]

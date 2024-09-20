@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -138,7 +140,8 @@ private const val DELAY_BEFORE_KEYBOARD_SHOWN = 250L
 @Composable
 fun TierEditScreen(
     modifier: Modifier = Modifier,
-    viewModel: TierEditViewModel = hiltViewModel()
+    viewModel: TierEditViewModel = hiltViewModel(),
+    sideControls: Boolean
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -279,7 +282,8 @@ fun TierEditScreen(
                 )
             },
             onCreateNewCategory = { viewModel.obtainEvent(EditEvent.CreateNewCategory) },
-            vibrationEnabled = settings.vibrationEnabled
+            vibrationEnabled = settings.vibrationEnabled,
+            sideControls = sideControls
         )
     }
 }
@@ -317,30 +321,51 @@ fun TierEditBody(
     onElementUnpinDropped: (Long) -> Unit,
     onReorderElements: (firstId: Long, secondId: Long) -> Unit,
     onCreateNewCategory: () -> Unit,
-    vibrationEnabled: Boolean
+    vibrationEnabled: Boolean,
+    sideControls: Boolean
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        CategoriesList(
-            modifier = Modifier.weight(1f),
-            categories = categories,
-            onCategoryClicked = onCategoryClicked,
-            onTierElementDropped = onTierElementDropped,
-            onReorderElements = onReorderElements,
-            onCreateNewCategory = onCreateNewCategory,
-            vibrationEnabled = vibrationEnabled
-        )
-        UnpinnedImages(
-            images = notAttachedElements,
-            onSearchImageClicked = onSearchImageClicked,
-            onDeleteItemDropped = onDeleteItemDropped,
-            onElementUnpinDropped = onElementUnpinDropped
-        )
+    if (!sideControls) {
+        Column(modifier = modifier.fillMaxSize()) {
+            CategoriesList(
+                modifier = Modifier.weight(1f),
+                categories = categories,
+                onCategoryClicked = onCategoryClicked,
+                onTierElementDropped = onTierElementDropped,
+                onReorderElements = onReorderElements,
+                onCreateNewCategory = onCreateNewCategory,
+                vibrationEnabled = vibrationEnabled
+            )
+            UnpinnedHorizontalImages(
+                images = notAttachedElements,
+                onSearchImageClicked = onSearchImageClicked,
+                onDeleteItemDropped = onDeleteItemDropped,
+                onElementUnpinDropped = onElementUnpinDropped
+            )
+        }
+    } else {
+        Row(modifier = modifier.fillMaxHeight()) {
+            CategoriesList(
+                modifier = Modifier.weight(1f),
+                categories = categories,
+                onCategoryClicked = onCategoryClicked,
+                onTierElementDropped = onTierElementDropped,
+                onReorderElements = onReorderElements,
+                onCreateNewCategory = onCreateNewCategory,
+                vibrationEnabled = vibrationEnabled
+            )
+            UnpinnedVerticalImages(
+                images = notAttachedElements,
+                onSearchImageClicked = onSearchImageClicked,
+                onDeleteItemDropped = onDeleteItemDropped,
+                onElementUnpinDropped = onElementUnpinDropped
+            )
+        }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun UnpinnedImages(
+fun UnpinnedHorizontalImages(
     modifier: Modifier = Modifier,
     images: List<TierElement>,
     onSearchImageClicked: () -> Unit,
@@ -389,7 +414,7 @@ fun UnpinnedImages(
                 target = dndCallback
             ),
         horizontalArrangement = Arrangement.spacedBy(itemArrangement),
-        contentPadding = PaddingValues(itemArrangement)
+        contentPadding = PaddingValues(itemArrangement),
     ) {
         item { AddDeleteImageItem(onDeleteItemDropped = onDeleteItemDropped) { onSearchImageClicked() } }
         items(items = images, key = { it.elementId }) { element ->
@@ -405,6 +430,89 @@ fun UnpinnedImages(
                     )
                     .dragAndDropSource {
                         detectVerticalDragGestures { _, dragAmount ->
+                            if (dragAmount < 5) startTransfer(
+                                DragAndDropTransferData(
+                                    ClipData.newPlainText(
+                                        DND_ELEMENT_ID_LABEL,
+                                        element.elementId.toString()
+                                    )
+                                )
+                            )
+                        }
+                    }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun UnpinnedVerticalImages(
+    modifier: Modifier = Modifier,
+    images: List<TierElement>,
+    onSearchImageClicked: () -> Unit,
+    onDeleteItemDropped: (Long) -> Unit,
+    onElementUnpinDropped: (Long) -> Unit
+) {
+    val itemArrangement = dimensionResource(id = R.dimen.item_arrangement)
+    val imageSize = dimensionResource(id = R.dimen.image_list_size)
+
+    var dragStarted by remember { mutableStateOf(false) }
+    val dndCallback = remember {
+        object : DragAndDropTarget {
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                val elementId =
+                    event.toAndroidDragEvent().clipData.getItemAt(0).text.toString().toLong()
+                onElementUnpinDropped(elementId)
+                dragStarted = false
+                return true
+            }
+
+            override fun onStarted(event: DragAndDropEvent) {
+                super.onStarted(event)
+                dragStarted = true
+            }
+
+            override fun onEnded(event: DragAndDropEvent) {
+                super.onEnded(event)
+                dragStarted = false
+            }
+        }
+    }
+    val animatedColor by animateColorAsState(
+        targetValue = if (dragStarted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+        label = "NotAttachedColor"
+    )
+    LazyColumn(
+        modifier = modifier
+            .fillMaxHeight()
+            .drawBehind { drawRect(animatedColor) }
+            .dragAndDropTarget(
+                shouldStartDragAndDrop = { event ->
+                    event
+                        .mimeTypes()
+                        .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
+                },
+                target = dndCallback
+            ),
+        verticalArrangement = Arrangement.spacedBy(itemArrangement),
+        contentPadding = PaddingValues(horizontal = itemArrangement),
+        reverseLayout = true
+    ) {
+        item { AddDeleteImageItem(onDeleteItemDropped = onDeleteItemDropped) { onSearchImageClicked() } }
+        items(items = images, key = { it.elementId }) { element ->
+            ElementImage(
+                imageUrl = element.imageUrl,
+                modifier = Modifier
+                    .animateItem()
+                    .sizeIn(
+                        minWidth = imageSize - 1.dp,
+                        maxHeight = imageSize + 1.dp,
+                        minHeight = imageSize - 1.dp,
+                        maxWidth = imageSize + 1.dp
+                    )
+                    .dragAndDropSource {
+                        detectHorizontalDragGestures { _, dragAmount ->
                             if (dragAmount < 5) startTransfer(
                                 DragAndDropTransferData(
                                     ClipData.newPlainText(
