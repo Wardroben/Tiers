@@ -66,8 +66,10 @@ class TiersListViewModel @Inject constructor(
             is TiersEvent.Delete -> viewModelScope.launch { deleteTierListUseCase(event.tierList) }
 
             TiersEvent.CreateNew -> viewModelScope.launch {
-                if (uiState.value is TiersState.Success &&
-                    (uiState.value as TiersState.Success).searchEnabled
+                if (
+                    uiState.value is TiersState.Success &&
+                    (uiState.value as TiersState.Success).searchEnabled &&
+                    (uiState.value as TiersState.Success).tiersList.isEmpty()
                 ) createNewTierListUseCase(name = searchQuery)
                 else createNewTierListUseCase()
             }
