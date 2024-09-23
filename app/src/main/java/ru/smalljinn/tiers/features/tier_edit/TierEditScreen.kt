@@ -401,46 +401,51 @@ fun UnpinnedHorizontalImages(
         targetValue = if (dragStarted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
         label = "NotAttachedColor"
     )
-    LazyRow(
-        modifier = modifier
-            .fillMaxWidth()
-            .drawBehind { drawRect(animatedColor) }
-            .dragAndDropTarget(
-                shouldStartDragAndDrop = { event ->
-                    event
-                        .mimeTypes()
-                        .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
-                },
-                target = dndCallback
-            ),
-        horizontalArrangement = Arrangement.spacedBy(itemArrangement),
-        contentPadding = PaddingValues(itemArrangement),
-    ) {
-        item { AddDeleteImageItem(onDeleteItemDropped = onDeleteItemDropped) { onSearchImageClicked() } }
-        items(items = images, key = { it.elementId }) { element ->
-            ElementImage(
-                imageUrl = element.imageUrl,
-                modifier = Modifier
-                    .animateItem()
-                    .sizeIn(
-                        minWidth = imageSize - 1.dp,
-                        maxHeight = imageSize + 1.dp,
-                        minHeight = imageSize - 1.dp,
-                        maxWidth = imageSize + 1.dp
-                    )
-                    .dragAndDropSource {
-                        detectVerticalDragGestures { _, dragAmount ->
-                            if (dragAmount < 5) startTransfer(
-                                DragAndDropTransferData(
-                                    ClipData.newPlainText(
-                                        DND_ELEMENT_ID_LABEL,
-                                        element.elementId.toString()
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        AddDeleteImageItem(
+            modifier = Modifier.padding(horizontal = itemArrangement),
+            onDeleteItemDropped = onDeleteItemDropped
+        ) { onSearchImageClicked() }
+        LazyRow(
+            modifier = modifier
+                .fillMaxWidth()
+                .drawBehind { drawRect(animatedColor) }
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { event ->
+                        event
+                            .mimeTypes()
+                            .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
+                    },
+                    target = dndCallback
+                ),
+            horizontalArrangement = Arrangement.spacedBy(itemArrangement),
+            contentPadding = PaddingValues(end = itemArrangement),
+        ) {
+            items(items = images, key = { it.elementId }) { element ->
+                ElementImage(
+                    imageUrl = element.imageUrl,
+                    modifier = Modifier
+                        .animateItem()
+                        .sizeIn(
+                            minWidth = imageSize - 1.dp,
+                            maxHeight = imageSize + 1.dp,
+                            minHeight = imageSize - 1.dp,
+                            maxWidth = imageSize + 1.dp
+                        )
+                        .dragAndDropSource {
+                            detectVerticalDragGestures { _, dragAmount ->
+                                if (dragAmount < 5) startTransfer(
+                                    DragAndDropTransferData(
+                                        ClipData.newPlainText(
+                                            DND_ELEMENT_ID_LABEL,
+                                            element.elementId.toString()
+                                        )
                                     )
                                 )
-                            )
+                            }
                         }
-                    }
-            )
+                )
+            }
         }
     }
 }
@@ -483,48 +488,57 @@ fun UnpinnedVerticalImages(
         targetValue = if (dragStarted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
         label = "NotAttachedColor"
     )
-    LazyColumn(
-        modifier = modifier
+    Column(
+        modifier = Modifier
             .fillMaxHeight()
-            .drawBehind { drawRect(animatedColor) }
-            .dragAndDropTarget(
-                shouldStartDragAndDrop = { event ->
-                    event
-                        .mimeTypes()
-                        .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
-                },
-                target = dndCallback
-            ),
-        verticalArrangement = Arrangement.spacedBy(itemArrangement),
-        contentPadding = PaddingValues(horizontal = itemArrangement),
-        reverseLayout = true
+            .padding(end = itemArrangement),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { AddDeleteImageItem(onDeleteItemDropped = onDeleteItemDropped) { onSearchImageClicked() } }
-        items(items = images, key = { it.elementId }) { element ->
-            ElementImage(
-                imageUrl = element.imageUrl,
-                modifier = Modifier
-                    .animateItem()
-                    .sizeIn(
-                        minWidth = imageSize - 1.dp,
-                        maxHeight = imageSize + 1.dp,
-                        minHeight = imageSize - 1.dp,
-                        maxWidth = imageSize + 1.dp
-                    )
-                    .dragAndDropSource {
-                        detectHorizontalDragGestures { _, dragAmount ->
-                            if (dragAmount < 5) startTransfer(
-                                DragAndDropTransferData(
-                                    ClipData.newPlainText(
-                                        DND_ELEMENT_ID_LABEL,
-                                        element.elementId.toString()
+        LazyColumn(
+            modifier = modifier
+                .weight(1f)
+                .drawBehind { drawRect(animatedColor) }
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { event ->
+                        event
+                            .mimeTypes()
+                            .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
+                    },
+                    target = dndCallback
+                ),
+            verticalArrangement = Arrangement.spacedBy(itemArrangement),
+            reverseLayout = true
+        ) {
+            items(items = images, key = { it.elementId }) { element ->
+                ElementImage(
+                    imageUrl = element.imageUrl,
+                    modifier = Modifier
+                        .animateItem()
+                        .sizeIn(
+                            minWidth = imageSize - 1.dp,
+                            maxHeight = imageSize + 1.dp,
+                            minHeight = imageSize - 1.dp,
+                            maxWidth = imageSize + 1.dp
+                        )
+                        .dragAndDropSource {
+                            detectHorizontalDragGestures { _, dragAmount ->
+                                if (dragAmount < 5) startTransfer(
+                                    DragAndDropTransferData(
+                                        ClipData.newPlainText(
+                                            DND_ELEMENT_ID_LABEL,
+                                            element.elementId.toString()
+                                        )
                                     )
                                 )
-                            )
+                            }
                         }
-                    }
-            )
+                )
+            }
         }
+        AddDeleteImageItem(
+            modifier = Modifier.padding(top = itemArrangement),
+            onDeleteItemDropped = onDeleteItemDropped
+        ) { onSearchImageClicked() }
     }
 }
 
@@ -736,7 +750,11 @@ enum class DragState {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onSearchClicked: () -> Unit) {
+private fun AddDeleteImageItem(
+    modifier: Modifier = Modifier,
+    onDeleteItemDropped: (Long) -> Unit,
+    onSearchClicked: () -> Unit
+) {
     var dragState by remember { mutableStateOf(DragState.STOPPED) }
     val dndCallback = remember {
         object : DragAndDropTarget {
@@ -779,7 +797,7 @@ private fun AddDeleteImageItem(onDeleteItemDropped: (Long) -> Unit, onSearchClic
     )
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
                     event
