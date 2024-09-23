@@ -409,6 +409,8 @@ fun UnpinnedHorizontalImages(
         LazyRow(
             modifier = modifier
                 .fillMaxWidth()
+                .height(imageSize)
+                .clip(RoundedCornerShape(dimensionResource(R.dimen.round_clip)))
                 .drawBehind { drawRect(animatedColor) }
                 .dragAndDropTarget(
                     shouldStartDragAndDrop = { event ->
@@ -497,6 +499,8 @@ fun UnpinnedVerticalImages(
         LazyColumn(
             modifier = modifier
                 .weight(1f)
+                .width(imageSize)
+                .clip(RoundedCornerShape(dimensionResource(R.dimen.round_clip)))
                 .drawBehind { drawRect(animatedColor) }
                 .dragAndDropTarget(
                     shouldStartDragAndDrop = { event ->
@@ -507,7 +511,7 @@ fun UnpinnedVerticalImages(
                     target = dndCallback
                 ),
             verticalArrangement = Arrangement.spacedBy(itemArrangement),
-            reverseLayout = true
+            reverseLayout = false
         ) {
             items(items = images, key = { it.elementId }) { element ->
                 ElementImage(
