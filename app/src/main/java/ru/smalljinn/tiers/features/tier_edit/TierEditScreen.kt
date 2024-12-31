@@ -3,7 +3,6 @@ package ru.smalljinn.tiers.features.tier_edit
 import android.content.ClipData
 import android.content.ClipDescription
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.util.Log
 import android.view.HapticFeedbackConstants
@@ -118,10 +117,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.ImageLoader
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.request.SuccessResult
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.request.crossfade
+import coil3.toBitmap
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -944,9 +946,9 @@ fun GoogleImageModalBottomSheet(
                             .clip(RoundedCornerShape(roundCornerSize))
                             .clickable {
                                 scope.launch {
-                                    val result = (loader.execute(request) as SuccessResult).drawable
-                                    val bitmap = (result as BitmapDrawable).bitmap
-                                    onImageAdd(index, bitmap ?: return@launch)
+                                    val result = (loader.execute(request) as SuccessResult).image
+                                    val bitmap = result.toBitmap()
+                                    onImageAdd(index, bitmap)
                                 }
                             },
                     )
