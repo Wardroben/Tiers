@@ -92,10 +92,13 @@ import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -424,17 +427,19 @@ fun UnpinnedHorizontalImages(
             contentPadding = PaddingValues(end = itemArrangement),
         ) {
             items(items = images, key = { it.elementId }) { element ->
+                val graphicLayer = rememberGraphicsLayer()
                 ElementImage(
                     imageUrl = element.imageUrl,
                     modifier = Modifier
+                        .drawWithCache {
+                            graphicLayer.record { drawContent() }
+                            onDrawWithContent { drawLayer(graphicLayer) }
+                        }
                         .animateItem()
-                        .sizeIn(
-                            minWidth = imageSize - 1.dp,
-                            maxHeight = imageSize + 1.dp,
-                            minHeight = imageSize - 1.dp,
-                            maxWidth = imageSize + 1.dp
-                        )
-                        .dragAndDropSource {
+                        .size(imageSize)
+                        .dragAndDropSource(drawDragDecoration = {
+                            drawLayer(graphicLayer)
+                        }) {
                             detectVerticalDragGestures { _, dragAmount ->
                                 if (dragAmount < 5) startTransfer(
                                     DragAndDropTransferData(
@@ -514,17 +519,13 @@ fun UnpinnedVerticalImages(
             reverseLayout = false
         ) {
             items(items = images, key = { it.elementId }) { element ->
+                val graphicLayer = rememberGraphicsLayer()
                 ElementImage(
                     imageUrl = element.imageUrl,
                     modifier = Modifier
                         .animateItem()
-                        .sizeIn(
-                            minWidth = imageSize - 1.dp,
-                            maxHeight = imageSize + 1.dp,
-                            minHeight = imageSize - 1.dp,
-                            maxWidth = imageSize + 1.dp
-                        )
-                        .dragAndDropSource {
+                        .size(imageSize)
+                        .dragAndDropSource(drawDragDecoration = { drawLayer(graphicLayer) }) {
                             detectHorizontalDragGestures { _, dragAmount ->
                                 if (dragAmount < 5) startTransfer(
                                     DragAndDropTransferData(
@@ -693,6 +694,7 @@ fun CategoryItem(
                 items(
                     items = categoryWithElements.elements,
                     key = { element -> element.elementId }) { element ->
+                    val graphicLayer = rememberGraphicsLayer()
                     ReorderableItem(
                         state = reorderableLazyGridState,
                         key = element.elementId
@@ -700,7 +702,11 @@ fun CategoryItem(
                         ElementImage(
                             imageUrl = element.imageUrl,
                             modifier = Modifier
-                                .dragAndDropSource {
+                                .drawWithCache {
+                                    graphicLayer.record { drawContent() }
+                                    onDrawWithContent { drawLayer(graphicLayer) }
+                                }
+                                .dragAndDropSource(drawDragDecoration = { drawLayer(graphicLayer) }) {
                                     detectTapGestures(
                                         onLongPress = {
                                             startTransfer(
@@ -733,12 +739,7 @@ fun CategoryItem(
                                     },
                                     interactionSource = interactionSource
                                 )
-                                .sizeIn(
-                                    minWidth = categoryHeight - 1.dp,
-                                    maxHeight = categoryHeight + 1.dp,
-                                    minHeight = categoryHeight - 1.dp,
-                                    maxWidth = categoryHeight + 1.dp
-                                )
+                                .size(categoryHeight)
 
                         )
                     }
