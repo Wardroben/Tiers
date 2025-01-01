@@ -73,6 +73,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -102,7 +103,17 @@ fun TiersListScreen(
 
     val tiersScrollState = rememberLazyListState()
     val tiersGridScrollState = rememberLazyGridState()
-    val createNewTierList = { viewModel.obtainEvent(TiersEvent.CreateNew) }
+
+    var createTierDialogVisible by rememberSaveable { mutableStateOf(false) }
+    if (createTierDialogVisible) {
+        TierNameDialog(
+            onCreateTierList = {
+                viewModel.obtainEvent(TiersEvent.CreateNewWithName(it))
+            },
+            onDismissRequest = { createTierDialogVisible = false }
+        )
+    }
+    val createNewTierList: () -> Unit = { createTierDialogVisible = true }
     val showAddButton by remember {
         derivedStateOf {
             tiersScrollState.canScrollForward || shouldShowGrid
@@ -123,6 +134,9 @@ fun TiersListScreen(
             when (event) {
                 is ActionEvent.StartIntent -> {
                     context.startActivity(event.intent)
+                }
+                is ActionEvent.NavigateToList -> {
+                    navigateToEdit(event.id)
                 }
             }
         }
@@ -392,7 +406,7 @@ fun SearchElement(
                     contentDescription = stringResource(R.string.search_tier_list_by_name_cd)
                 )
             },
-            label = { Text(text = stringResource(R.string.tier_name_search_label)) },
+            label = { Text(text = stringResource(R.string.tier_name_search_label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             trailingIcon = {
@@ -577,6 +591,51 @@ fun LoadingContent(modifier: Modifier = Modifier) {
             CircularProgressIndicator()
         }
     }
+}
+
+@Composable
+private fun TierNameDialog(
+    modifier: Modifier = Modifier,
+    onDismissRequest: () -> Unit,
+    onCreateTierList: (String) -> Unit,
+) {
+    var tierListName by rememberSaveable { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(text = stringResource(R.string.new_tier_list_name))
+        },
+        text = {
+            OutlinedTextField(
+                value = tierListName,
+                onValueChange = { tierListName = it },
+                label = { Text(stringResource(R.string.name)) },
+                placeholder = { Text(stringResource(R.string.untitled_tierlist_name)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(capitalization = KeyboardCapitalization.Sentences)
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onCreateTierList(tierListName)
+                    onDismissRequest()
+                }
+            ) {
+                Text(stringResource(R.string.create))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest,
+            ) {
+                Text(stringResource(R.string.cancel_btn_label))
+            }
+        },
+        modifier = modifier
+    )
 }
 
 @Preview

@@ -29,7 +29,7 @@
     <string name="settings">Настройки</string>
     <string name="navigate_back_cd">Вернуться обратно</string>
     <string name="go_to_settings_cd">Перейти в настройки</string>
-    <string name="tier_name_search_label">Название тира</string>
+    <string name="tier_name_search_label">Название тир листа</string>
     <string name="search_images_instruction_cd">Инструкция настройки поиска изображений</string>
     <string name="http_error_sheet_message">Интернет ошибка</string>
     <string name="unexpected_error_sheet_message">Неожиданная ошибка</string>
@@ -39,4 +39,7 @@
     <string name="create_new_category">Создать новую категорию</string>
     <string name="save_category_cd">Сохранить категорию %1$s</string>
     <string name="delete_category_cd">Удалить категорию %1$s</string>
+    <string name="new_tier_list_name">Название нового листа</string>
+    <string name="name">Название</string>
+    <string name="create">Создать</string>
 </resources>

@@ -82,6 +82,15 @@ class TiersListViewModel @Inject constructor(
                 val intent = exportShareListUseCase.invoke(event.listId)
                 eventChannel.send(ActionEvent.StartIntent(intent))
             }
+
+            is TiersEvent.CreateNewWithName -> {
+                viewModelScope.launch {
+                    val newListId = if (event.tierName.isBlank()) createNewTierListUseCase()
+                    else createNewTierListUseCase(name = event.tierName)
+
+                    eventChannel.send(ActionEvent.NavigateToList(newListId))
+                }
+            }
         }
     }
 

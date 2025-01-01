@@ -38,4 +38,7 @@
     <string name="create_new_category">Create new category</string>
     <string name="save_category_cd">Save category %1$s</string>
     <string name="delete_category_cd">Delete category %1$s</string>
+    <string name="new_tier_list_name">New tier list name</string>
+    <string name="name">Name</string>
+    <string name="create">Create</string>
 </resources>

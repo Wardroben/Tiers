@@ -4,4 +4,5 @@ import android.content.Intent
 
 sealed class ActionEvent {
     data class StartIntent(val intent: Intent) : ActionEvent()
+    data class NavigateToList(val id: Long): ActionEvent()
 }
